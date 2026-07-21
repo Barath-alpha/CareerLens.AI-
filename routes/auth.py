@@ -116,25 +116,12 @@ def login():
 
         user = User.query.filter_by(email=email).first()
 
-        if not user:
-            role = 'admin' if 'admin' in email else 'student'
-            user = User(email=email, role=role, is_verified=True)
-            user.set_password(password if password else 'Student@123')
-            db.session.add(user)
-            db.session.commit()
-
-            profile = StudentProfile(
-                user_id=user.id,
-                full_name='Placement Student' if role == 'student' else 'CareerLens-AI Admin',
-                college='IIT Bombay' if role == 'student' else 'CareerLens-AI HQ',
-                department='Computer Science',
-                profile_completeness=85.0
-            )
-            db.session.add(profile)
-            db.session.commit()
-        elif not user.check_password(password):
-            user.set_password(password)
-            db.session.commit()
+        if not user or not user.check_password(password):
+            error_msg = 'Invalid email or password.'
+            if request.is_json:
+                return jsonify({'success': False, 'message': error_msg}), 401
+            flash(error_msg, 'danger')
+            return render_template('auth/login.html', error=error_msg)
 
         if not user.is_active:
             error_msg = 'Your account has been deactivated.'
