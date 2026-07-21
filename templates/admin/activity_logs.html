@@ -1,0 +1,47 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Activity Logs{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header">
+    <h1 class="page-title">📜 Audit & Activity Logs</h1>
+    <p class="page-subtitle">Track system events, student logins, prediction runs, and administrative actions.</p>
+  </div>
+
+  <div class="card">
+    <div class="table-container" style="border:none; border-radius:var(--radius-lg);">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log, user in logs %}
+          <tr>
+            <td style="font-size:0.8rem; color:var(--text-muted); min-width:160px;">
+              {{ log.created_at.strftime('%b %d, %Y · %I:%M:%S %p') if log.created_at else '' }}
+            </td>
+            <td>
+              <div style="font-weight:600; font-size:0.85rem;">{{ user.email }}</div>
+              <span class="badge badge-info" style="font-size:0.6rem;">{{ user.role }}</span>
+            </td>
+            <td><span class="badge badge-primary">{{ log.action }}</span></td>
+            <td style="font-size:0.82rem; color:var(--text-secondary);">{{ log.details or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4"><div class="empty-state" style="padding:var(--space-12);">No activity logs recorded yet.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}

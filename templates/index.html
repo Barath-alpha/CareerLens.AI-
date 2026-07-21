@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+{% block title %}CareerLens-AI – Predict Your Placement Success with AI{% endblock %}
+{% block meta_description %}India's most advanced AI-powered campus placement prediction platform. Get personalized career readiness scores, interview tips, and placement insights.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+{% endblock %}
+
+{% block body %}
+
+<!-- ── Navigation ──────────────────────────────────────── -->
+<nav class="landing-nav" id="landingNav">
+  <a href="{{ url_for('index') }}" class="nav-brand">
+    <div class="logo-icon">🎯</div>
+    CareerLens-AI
+  </a>
+
+  <ul class="nav-links-landing">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#testimonials">Success Stories</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+
+  <div class="nav-actions">
+    {% if current_user.is_authenticated %}
+      <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-sm">Dashboard →</a>
+    {% else %}
+      <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm">Login</a>
+      <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-sm">Start Free →</a>
+    {% endif %}
+
+    <button class="btn btn-ghost btn-icon btn-sm" id="themeToggle" aria-label="Toggle theme">
+      <i data-lucide="sun" id="themeIcon" style="width:16px;height:16px;"></i>
+    </button>
+  </div>
+
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+    <i data-lucide="menu" style="width:20px;height:20px;"></i>
+  </button>
+</nav>
+
+<!-- ── Hero ──────────────────────────────────────────────── -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+
+  <div class="hero-container">
+    <!-- Left: Content -->
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        ✨ Powered by AI & Machine Learning
+      </div>
+
+      <h1 class="hero-title">
+        Predict Your
+        <span class="highlight">Placement Success</span>
+        with AI
+      </h1>
+
+      <p class="hero-subtitle">
+        Get AI-powered placement predictions, personalized career roadmaps, resume analysis,
+        interview prep, and real-time insights to land your dream job.
+      </p>
+
+      <div class="hero-cta">
+        <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-xl btn-shimmer">
+          <i data-lucide="rocket" style="width:18px;height:18px;"></i>
+          Start Free – No Credit Card
+        </a>
+        <a href="#how-it-works" class="btn btn-secondary btn-xl">
+          <i data-lucide="play-circle" style="width:18px;height:18px;"></i>
+          Watch Demo
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-value" data-count="50000">0</div>
+          <div class="hero-stat-label">Students</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" data-count="94">0</div>
+          <div class="hero-stat-label">% Accuracy</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" data-count="500">0</div>
+          <div class="hero-stat-label">+ Colleges</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" data-count="120">0</div>
+          <div class="hero-stat-label">+ Companies</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Dashboard Preview Card -->
+    <div class="hero-visual">
+      <!-- Floating stat card top-left -->
+      <div class="hero-card-float hero-card-float-1">
+        <div class="float-card">
+          <div class="float-card-icon" style="background:rgba(16,185,129,0.15); color:#10b981;">✓</div>
+          <div>
+            <div class="float-card-value">87%</div>
+            <div class="float-card-label">Placement Score</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Card -->
+      <div class="hero-card-main">
+        <div class="prediction-card-demo">
+          <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:1rem; font-weight:700;">
+            🎯 AI Prediction Result
+          </div>
+
+          <!-- Circle -->
+          <div class="prediction-circle">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+              <circle class="ring-bg" cx="70" cy="70" r="58" stroke-width="10"/>
+              <circle class="ring-progress" cx="70" cy="70" r="58" stroke-width="10"
+                stroke="url(#heroGrad)"
+                stroke-dasharray="364.4"
+                stroke-dashoffset="47.4"
+                id="heroRing"/>
+              <defs>
+                <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#6366f1"/>
+                  <stop offset="100%" style="stop-color:#06b6d4"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="circle-text">
+              <div class="prediction-percent">87%</div>
+              <div class="prediction-label">Placed</div>
+            </div>
+          </div>
+
+          <!-- Scores -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; text-align:left; margin-top:1rem;">
+            <div style="background:var(--bg-glass-light); border-radius:10px; padding:12px;">
+              <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em;">Technical</div>
+              <div style="font-size:1.1rem; font-weight:800; color:var(--text-heading); margin-top:2px;">8.5/10</div>
+              <div style="height:3px; background:var(--border); border-radius:10px; margin-top:6px;">
+                <div style="width:85%; height:100%; background:var(--grad-primary); border-radius:10px;"></div>
+              </div>
+            </div>
+            <div style="background:var(--bg-glass-light); border-radius:10px; padding:12px;">
+              <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em;">Communication</div>
+              <div style="font-size:1.1rem; font-weight:800; color:var(--text-heading); margin-top:2px;">7.5/10</div>
+              <div style="height:3px; background:var(--border); border-radius:10px; margin-top:6px;">
+                <div style="width:75%; height:100%; background:var(--grad-success); border-radius:10px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Result Badge -->
+          <div style="margin-top:1rem; padding:10px 16px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:10px; display:flex; align-items:center; gap:8px;">
+            <span style="color:#10b981; font-size:1.1rem;">🟢</span>
+            <span style="font-size:0.8rem; font-weight:600; color:#10b981;">HIGH PLACEMENT PROBABILITY</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating stat bottom-right -->
+      <div class="hero-card-float hero-card-float-2">
+        <div class="float-card">
+          <div class="float-card-icon" style="background:rgba(245,158,11,0.15); color:#f59e0b;">📈</div>
+          <div>
+            <div class="float-card-value">+12%</div>
+            <div class="float-card-label">vs Last Month</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Logo Slider ─────────────────────────────────────── -->
+<div class="logo-section">
+  <div class="logo-section-title">Trusted by students from top companies & colleges</div>
+  <div class="logo-slider-wrapper" style="overflow:hidden;">
+    <div class="logo-slider" id="logoSlider">
+      {% set companies = ['Google', 'Microsoft', 'Amazon', 'Meta', 'Apple', 'TCS', 'Infosys', 'Wipro', 'Accenture', 'IBM', 'Oracle', 'Zoho', 'Flipkart', 'Swiggy', 'Razorpay', 'CRED'] %}
+      {% for company in companies %}
+      <div class="logo-item">
+        <span class="logo-dot"></span>{{ company }}
+      </div>
+      {% endfor %}
+      {% for company in companies %}
+      <div class="logo-item">
+        <span class="logo-dot"></span>{{ company }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Features Section ────────────────────────────────── -->
+<section class="section section-center" id="features">
+  <div class="reveal">
+    <span class="section-tag">⚡ Platform Features</span>
+    <h2 class="section-title">Everything You Need to Get <span class="text-gradient">Placed</span></h2>
+    <p class="section-subtitle">From AI prediction to interview prep – a complete placement readiness platform built for serious students.</p>
+  </div>
+
+  <div class="features-grid reveal">
+    <div class="feature-card stagger-1">
+      <div class="feature-icon">🤖</div>
+      <h3 class="feature-title">AI Placement Prediction</h3>
+      <p class="feature-desc">Our gradient boosting ML model analyzes 22+ parameters to predict your placement probability with 94% accuracy.</p>
+    </div>
+    <div class="feature-card stagger-2">
+      <div class="feature-icon">📄</div>
+      <h3 class="feature-title">Resume Analyzer</h3>
+      <p class="feature-desc">ATS-optimized resume scoring with skill gap analysis, keyword suggestions, and improvement roadmap.</p>
+    </div>
+    <div class="feature-card stagger-3">
+      <div class="feature-icon">🧠</div>
+      <h3 class="feature-title">AI Career Advisor</h3>
+      <p class="feature-desc">Chat with Gemini-powered AI advisor for personalized career guidance, roadmaps, and interview tips.</p>
+    </div>
+    <div class="feature-card stagger-4">
+      <div class="feature-icon">🎤</div>
+      <h3 class="feature-title">Mock Interview Prep</h3>
+      <p class="feature-desc">AI-generated technical and HR interview questions with scoring, feedback, and confidence tips.</p>
+    </div>
+    <div class="feature-card stagger-1">
+      <div class="feature-icon">📊</div>
+      <h3 class="feature-title">Smart Analytics</h3>
+      <p class="feature-desc">Track skill growth, prediction trends, and performance with beautiful interactive charts and progress rings.</p>
+    </div>
+    <div class="feature-card stagger-2">
+      <div class="feature-icon">🏆</div>
+      <h3 class="feature-title">Leaderboard & Gamification</h3>
+      <p class="feature-desc">Compete with peers on department and college leaderboards. Earn achievements, badges, and daily streaks.</p>
+    </div>
+    <div class="feature-card stagger-3">
+      <div class="feature-icon">🏢</div>
+      <h3 class="feature-title">Company Eligibility</h3>
+      <p class="feature-desc">Instantly check which companies you are eligible for based on CGPA, backlogs, skills, and requirements.</p>
+    </div>
+    <div class="feature-card stagger-4">
+      <div class="feature-icon">📈</div>
+      <h3 class="feature-title">Readiness Score</h3>
+      <p class="feature-desc">A comprehensive 0-100 placement readiness score covering skills, resume, coding, interview, and communication.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── How It Works ────────────────────────────────────── -->
+<section class="section section-center" id="how-it-works" style="background: rgba(99,102,241,0.02); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="reveal">
+    <span class="section-tag">🔄 Process</span>
+    <h2 class="section-title">Get Your AI Prediction in <span class="text-gradient">4 Simple Steps</span></h2>
+    <p class="section-subtitle">CareerLens-AI makes it effortless to understand your placement readiness and improve.</p>
+  </div>
+
+  <div class="timeline reveal">
+    <div class="timeline-item">
+      <div class="timeline-dot">1️⃣</div>
+      <div class="timeline-content">
+        <div class="timeline-step">Step 1</div>
+        <h3 class="feature-title">Create Your Account</h3>
+        <p class="feature-desc">Sign up in under 60 seconds with your email. No credit card required. Start with our free plan immediately.</p>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot">2️⃣</div>
+      <div class="timeline-content">
+        <div class="timeline-step">Step 2</div>
+        <h3 class="feature-title">Complete Your Profile</h3>
+        <p class="feature-desc">Add your academic details, skills, projects, internships, certifications, and upload your resume. The more you add, the smarter the AI becomes.</p>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot">3️⃣</div>
+      <div class="timeline-content">
+        <div class="timeline-step">Step 3</div>
+        <h3 class="feature-title">Run AI Prediction</h3>
+        <p class="feature-desc">Our ML model analyzes your profile with 22 parameters and generates your placement probability, strengths, weaknesses, and improvement suggestions.</p>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot">4️⃣</div>
+      <div class="timeline-content">
+        <div class="timeline-step">Step 4</div>
+        <h3 class="feature-title">Improve & Get Placed</h3>
+        <p class="feature-desc">Follow your personalized AI roadmap, practice with mock interviews, track progress, and apply to eligible companies with confidence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Testimonials ────────────────────────────────────── -->
+<section class="section section-center" id="testimonials">
+  <div class="reveal">
+    <span class="section-tag">⭐ Success Stories</span>
+    <h2 class="section-title">Students Love <span class="text-gradient">CareerLens-AI</span></h2>
+    <p class="section-subtitle">Real stories from students who used CareerLens-AI to land their dream jobs.</p>
+  </div>
+
+  <div class="testimonials-grid reveal">
+    <div class="testimonial-card">
+      <div class="star-rating">★★★★★</div>
+      <div class="testimonial-quote">"</div>
+      <p class="testimonial-text">CareerLens-AI showed me exactly where I was lagging. After following the AI suggestions for 2 months, I improved my placement score from 62% to 88% and got placed at Microsoft!</p>
+      <div class="testimonial-author">
+        <div class="avatar avatar-md" style="background:var(--grad-primary); color:#fff; font-weight:700;">AK</div>
+        <div class="testimonial-meta">
+          <div class="name">Arjun Kumar</div>
+          <div class="role">SWE at Microsoft · IIT Bombay, CSE</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card">
+      <div class="star-rating">★★★★★</div>
+      <div class="testimonial-quote">"</div>
+      <p class="testimonial-text">The AI Career Advisor chatbot is incredible! It gave me a 3-month preparation plan, recommended exactly the right LeetCode problems, and my FAANG interview preparation became so focused.</p>
+      <div class="testimonial-author">
+        <div class="avatar avatar-md" style="background:var(--grad-success); color:#fff; font-weight:700;">PS</div>
+        <div class="testimonial-meta">
+          <div class="name">Priya Sharma</div>
+          <div class="role">Data Engineer at Google · NIT Trichy, ECE</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card">
+      <div class="star-rating">★★★★★</div>
+      <div class="testimonial-quote">"</div>
+      <p class="testimonial-text">I was worried about my 7.1 CGPA. CareerLens-AI showed me exactly which companies I'm eligible for and what to focus on. Got an offer from Zoho with ₹14 LPA package!</p>
+      <div class="testimonial-author">
+        <div class="avatar avatar-md" style="background:var(--grad-warning); color:#fff; font-weight:700;">RV</div>
+        <div class="testimonial-meta">
+          <div class="name">Rahul Verma</div>
+          <div class="role">Product Engineer at Zoho · VIT Chennai</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Pricing ─────────────────────────────────────────── -->
+<section class="section section-center" id="pricing" style="background: rgba(99,102,241,0.02); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="reveal">
+    <span class="section-tag">💳 Pricing</span>
+    <h2 class="section-title">Simple, <span class="text-gradient">Transparent</span> Pricing</h2>
+    <p class="section-subtitle">Start free. Upgrade when you need more power. No hidden fees.</p>
+  </div>
+
+  <div class="pricing-grid reveal">
+    <div class="pricing-card">
+      <div class="pricing-tier">Free</div>
+      <div class="pricing-price"><sup>₹</sup>0</div>
+      <div class="pricing-period">forever · no credit card</div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span> AI Placement Prediction (3/month)</li>
+        <li><span class="check">✓</span> Basic Resume Analysis</li>
+        <li><span class="check">✓</span> Student Dashboard</li>
+        <li><span class="check">✓</span> Company Eligibility Check</li>
+        <li><span class="cross">·</span> <span style="opacity:0.5;">AI Career Advisor</span></li>
+        <li><span class="cross">·</span> <span style="opacity:0.5;">Mock Interviews</span></li>
+        <li><span class="cross">·</span> <span style="opacity:0.5;">PDF Reports</span></li>
+      </ul>
+      <a href="{{ url_for('auth.signup') }}" class="btn btn-secondary btn-block">Get Started Free</a>
+    </div>
+
+    <div class="pricing-card featured">
+      <div class="pricing-badge">🔥 Most Popular</div>
+      <div class="pricing-tier">Pro</div>
+      <div class="pricing-price"><sup>₹</sup>299</div>
+      <div class="pricing-period">per month · billed monthly</div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span> Unlimited AI Predictions</li>
+        <li><span class="check">✓</span> Advanced Resume Analysis + ATS</li>
+        <li><span class="check">✓</span> AI Career Advisor (Gemini)</li>
+        <li><span class="check">✓</span> Mock Interview Generator</li>
+        <li><span class="check">✓</span> Leaderboard & Achievements</li>
+        <li><span class="check">✓</span> PDF Report Generation</li>
+        <li><span class="check">✓</span> Learning Path Generator</li>
+      </ul>
+      <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-block btn-shimmer">Start Pro Trial →</a>
+    </div>
+
+    <div class="pricing-card">
+      <div class="pricing-tier">College</div>
+      <div class="pricing-price"><sup>₹</sup>4999</div>
+      <div class="pricing-period">per month · unlimited students</div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span> Everything in Pro</li>
+        <li><span class="check">✓</span> Admin Dashboard</li>
+        <li><span class="check">✓</span> Student Management</li>
+        <li><span class="check">✓</span> Company Management</li>
+        <li><span class="check">✓</span> Department Analytics</li>
+        <li><span class="check">✓</span> Bulk Export (Excel/PDF)</li>
+        <li><span class="check">✓</span> Priority Support</li>
+      </ul>
+      <a href="mailto:contact@placementai.com" class="btn btn-secondary btn-block">Contact Sales →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ────────────────────────────────────────────── -->
+<section class="section section-center" id="faq">
+  <div class="reveal">
+    <span class="section-tag">❓ FAQ</span>
+    <h2 class="section-title">Frequently Asked <span class="text-gradient">Questions</span></h2>
+  </div>
+
+  <div class="faq-list reveal">
+    <div class="faq-item">
+      <button class="faq-question">
+        How accurate is the AI placement prediction?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          Our Gradient Boosting ML model achieves ~94% accuracy on test data trained on 50,000+ placement outcomes. The prediction improves significantly as you fill more profile details. We recommend completing at least 80% of your profile before running prediction for best results.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">
+        Is my data secure and private?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          Absolutely. All passwords are hashed with bcrypt. Data is encrypted in transit (HTTPS). We never share your personal data with companies. You have full control to delete your account and all data at any time.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">
+        Which parameters does the AI use to predict placement?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          The AI analyzes 22 parameters including: CGPA, 10th & 12th scores, communication skills, technical skills, programming proficiency, aptitude, logical reasoning, problem solving, leadership, soft skills, interview readiness, projects count, internships, hackathons, certificates, LeetCode solved, GitHub activity, attendance, backlogs, and coding contest rating.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">
+        Can colleges use CareerLens-AI for their entire placement cell?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          Yes! Our College plan offers an admin dashboard where placement officers can manage all students, view predictions, track department-wise analytics, manage companies, send notifications, and export reports in Excel/PDF. Contact us for a demo.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">
+        Do I need to be from a computer science background?
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          Not at all! CareerLens-AI works for students from all departments – CSE, ECE, Mechanical, Civil, MBA, and more. The AI adapts recommendations based on your department and career goals.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA Section ─────────────────────────────────────── -->
+<div class="cta-section reveal">
+  <div class="cta-bg"></div>
+  <div class="cta-orb"></div>
+  <div style="position:relative; z-index:1;">
+    <span class="section-tag">🚀 Get Started</span>
+    <h2 class="section-title" style="margin-top:var(--space-4);">Ready to Predict Your <span class="text-gradient">Placement Success?</span></h2>
+    <p class="section-subtitle">Join 50,000+ students already using CareerLens-AI to prepare smarter and get placed faster.</p>
+    <div style="display:flex; gap:var(--space-4); justify-content:center; flex-wrap:wrap;">
+      <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-xl btn-shimmer">
+        🎯 Start Free Today →
+      </a>
+      <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-xl">
+        Login to Dashboard
+      </a>
+    </div>
+    <p style="margin-top:var(--space-4); font-size:0.8rem; color:var(--text-muted);">
+      ✓ No credit card required &nbsp;·&nbsp; ✓ Setup in 2 minutes &nbsp;·&nbsp; ✓ Cancel anytime
+    </p>
+  </div>
+</div>
+
+<!-- ── Footer ─────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="{{ url_for('index') }}" class="nav-brand" style="margin-bottom:0;">
+        <div class="logo-icon" style="width:32px;height:32px;font-size:1rem;">🎯</div>
+        CareerLens-AI
+      </a>
+      <p class="brand-desc">
+        India's most advanced AI-powered campus placement prediction platform. Helping students get placed at their dream companies since 2024.
+      </p>
+      <div class="footer-newsletter">
+        <input type="email" placeholder="Enter your email..." id="newsletterEmail">
+        <button class="btn btn-primary btn-sm" onclick="subscribeNewsletter()">Subscribe</button>
+      </div>
+    </div>
+
+    <div>
+      <h4 class="footer-col-title">Platform</h4>
+      <ul class="footer-links">
+        <li><a href="{{ url_for('auth.signup') }}">Get Started</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4 class="footer-col-title">Resources</h4>
+      <ul class="footer-links">
+        <li><a href="#">Documentation</a></li>
+        <li><a href="#">API Reference</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Changelog</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4 class="footer-col-title">Company</h4>
+      <ul class="footer-links">
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+        <li><a href="mailto:contact@placementai.com">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© {{ current_year }} CareerLens-AI. All rights reserved. Made with ❤️ for Indian Students.</p>
+    <div class="social-links">
+      <a href="#" class="social-link" aria-label="Twitter">𝕏</a>
+      <a href="#" class="social-link" aria-label="LinkedIn">in</a>
+      <a href="#" class="social-link" aria-label="GitHub">⌥</a>
+      <a href="#" class="social-link" aria-label="Instagram">◻</a>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+{% endblock %}

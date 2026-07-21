@@ -1,0 +1,208 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Goals Tracker{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">🎯 Goals Tracker</h1>
+      <p class="page-subtitle">Set placement goals and track your daily progress.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('addGoalModal')">
+      <i data-lucide="plus" style="width:16px;height:16px;"></i> Add Goal
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--space-4); margin-bottom:var(--space-6);">
+    <div class="stat-card success">
+      <div class="stat-value">{{ goals|selectattr('is_completed')|list|length }}</div>
+      <div class="stat-label">Completed Goals</div>
+    </div>
+    <div class="stat-card info">
+      <div class="stat-value">{{ goals|length }}</div>
+      <div class="stat-label">Total Goals</div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-value">{{ profile.daily_streak if profile else 0 }}🔥</div>
+      <div class="stat-label">Day Streak</div>
+    </div>
+  </div>
+
+  <!-- Goals List -->
+  <div class="card">
+    <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">📋 Your Goals</h3></div>
+    <div class="card-body">
+      {% if goals %}
+      {% for goal in goals %}
+      <div class="goal-item" id="goal_{{ goal.id }}">
+        <div class="goal-header">
+          <div style="display:flex; align-items:center; gap:var(--space-3);">
+            <input type="checkbox" {{ 'checked' if goal.is_completed }}
+              onchange="updateGoalProgress({{ goal.id }}, this.checked ? 100 : 0)"
+              style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
+            <span class="goal-title-text" style="{{ 'text-decoration:line-through; opacity:0.5;' if goal.is_completed }}">{{ goal.title }}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:var(--space-2);">
+            <span class="badge badge-{{ 'primary' if goal.type == 'daily' else ('info' if goal.type == 'weekly' else 'success') }}">{{ goal.type }}</span>
+            <span class="goal-percent">{{ goal.progress|int }}%</span>
+            <button class="btn btn-ghost btn-icon btn-sm" style="color:var(--accent-red);"
+              onclick="deleteGoal({{ goal.id }})">
+              <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+            </button>
+          </div>
+        </div>
+        {% if goal.description %}
+        <div style="font-size:0.8rem; color:var(--text-muted); margin-left:2.2rem;">{{ goal.description }}</div>
+        {% endif %}
+        <div style="margin-left:2.2rem;">
+          <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:4px;">
+            <div class="progress" style="flex:1;">
+              <div class="progress-bar" id="bar_{{ goal.id }}" style="width:{{ goal.progress }}%;"></div>
+            </div>
+            <input type="range" min="0" max="100" value="{{ goal.progress }}" style="width:80px;"
+              onchange="updateGoalProgress({{ goal.id }}, this.value)"
+              oninput="document.getElementById('prog_{{ goal.id }}').textContent = this.value + '%'">
+            <span id="prog_{{ goal.id }}" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); min-width:32px;">{{ goal.progress|int }}%</span>
+          </div>
+          {% if goal.target_date %}
+          <div style="font-size:0.72rem; color:var(--text-muted);">🗓️ Due: {{ goal.target_date.strftime('%b %d, %Y') }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-state" style="padding:var(--space-12);">
+        <div class="empty-state-icon">🎯</div>
+        <div class="empty-state-title">No Goals Yet</div>
+        <p style="font-size:0.875rem;">Set goals to track your placement preparation progress.</p>
+        <button class="btn btn-primary" onclick="openModal('addGoalModal')" style="margin-top:var(--space-4);">
+          + Add Your First Goal
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Suggested Goals -->
+  <div class="card" style="margin-top:var(--space-5);">
+    <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">💡 Suggested Goals</h3></div>
+    <div class="card-body" style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3);">
+      {% for goal in [
+        ('Solve 5 LeetCode problems today', 'daily'),
+        ('Complete DSA course chapter', 'weekly'),
+        ('Mock interview session', 'daily'),
+        ('Update LinkedIn profile', 'monthly'),
+        ('Build a mini project', 'monthly'),
+        ('Apply to 3 companies', 'weekly'),
+        ('Read System Design chapter', 'daily'),
+        ('Earn a certification', 'monthly'),
+      ] %}
+      <button class="btn btn-ghost btn-sm" style="justify-content:flex-start; text-align:left; font-size:0.8rem;"
+        onclick="quickAddGoal('{{ goal[0] }}', '{{ goal[1] }}')">
+        <i data-lucide="plus" style="width:12px;height:12px;"></i> {{ goal[0] }}
+        <span class="badge badge-{{ 'primary' if goal[1] == 'daily' else ('info' if goal[1] == 'weekly' else 'success') }}" style="font-size:0.6rem; margin-left:auto;">{{ goal[1] }}</span>
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Add Goal Modal -->
+<div class="modal-overlay" id="addGoalModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">🎯 Add New Goal</h3>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal('addGoalModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Goal Title *</label>
+        <input type="text" id="goalTitle" class="form-control" placeholder="e.g., Solve 10 LeetCode problems" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea id="goalDesc" class="form-control" rows="2" placeholder="Optional details..."></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Goal Type</label>
+          <select id="goalType" class="form-select">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Date</label>
+          <input type="date" id="goalDate" class="form-control">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addGoalModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addGoal()">🎯 Add Goal</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+async function addGoal() {
+  const title = document.getElementById('goalTitle').value;
+  if (!title) { showToast('Goal title is required', 'warning'); return; }
+
+  const res = await fetch('{{ url_for("student.goals") }}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      title,
+      description: document.getElementById('goalDesc').value,
+      type: document.getElementById('goalType').value,
+      target_date: document.getElementById('goalDate').value,
+    }),
+  });
+  const data = await res.json();
+  if (data.success) {
+    showToast('Goal added!', 'success');
+    closeModal('addGoalModal');
+    setTimeout(() => location.reload(), 800);
+  }
+}
+
+async function quickAddGoal(title, type) {
+  const res = await fetch('{{ url_for("student.goals") }}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ title, type }),
+  });
+  const data = await res.json();
+  if (data.success) {
+    showToast('Goal added!', 'success');
+    setTimeout(() => location.reload(), 600);
+  }
+}
+
+async function updateGoalProgress(id, progress) {
+  document.getElementById(`bar_${id}`).style.width = progress + '%';
+  await fetch(`/student/goals/${id}/progress`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({progress: parseInt(progress)}),
+  });
+}
+
+async function deleteGoal(id) {
+  if (!confirm('Delete this goal?')) return;
+  const res = await fetch(`/student/goals/${id}/delete`, { method: 'POST' });
+  const data = await res.json();
+  if (data.success) {
+    document.getElementById(`goal_${id}`)?.remove();
+    showToast('Goal deleted', 'success');
+  }
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

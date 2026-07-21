@@ -1,0 +1,535 @@
+/* ============================================================
+   PlacementAI – Dashboard CSS
+   ============================================================ */
+
+/* Sidebar Overlay (mobile) */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 850;
+  backdrop-filter: blur(4px);
+}
+
+@media (max-width: 768px) {
+  .sidebar-overlay.active { display: block; }
+}
+
+/* ── Dashboard Grid ─────────────────────────────────────── */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-5);
+}
+
+.dashboard-grid-full { grid-column: 1 / -1; }
+.dashboard-grid-2 { grid-column: span 2; }
+
+/* ── Welcome Card ───────────────────────────────────────── */
+.welcome-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-card::before {
+  content: '';
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 200px;
+  height: 200px;
+  background: var(--primary);
+  border-radius: 50%;
+  opacity: 0.06;
+}
+
+.welcome-time {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--primary-light);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.welcome-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-heading);
+  margin-bottom: var(--space-2);
+}
+
+.welcome-subtitle { color: var(--text-secondary); font-size: 0.875rem; }
+
+/* ── Prediction Score Card ──────────────────────────────── */
+.prediction-score-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  text-align: center;
+  transition: all var(--transition-base);
+}
+
+.prediction-score-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.score-ring-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto var(--space-4);
+}
+
+.score-ring-container svg { transform: rotate(-90deg); }
+
+.score-center-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-value {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--text-heading);
+  font-family: var(--font-display);
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ── Radar Chart Card ───────────────────────────────────── */
+.radar-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+}
+
+/* ── Skill Progress Items ───────────────────────────────── */
+.skill-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.skill-item:last-child { margin-bottom: 0; }
+
+.skill-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 120px;
+}
+
+.skill-bar-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.skill-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ── Goal Card ──────────────────────────────────────────── */
+.goal-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--bg-glass-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-3);
+  transition: all var(--transition-fast);
+}
+
+.goal-item:hover { border-color: var(--border-hover); }
+.goal-item:last-child { margin-bottom: 0; }
+
+.goal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.goal-title-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
+.goal-percent {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-light);
+}
+
+.goal-type-badge {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Achievement Card ───────────────────────────────────── */
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.achievement-item {
+  text-align: center;
+  padding: var(--space-3);
+  background: var(--bg-glass-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+  cursor: default;
+}
+
+.achievement-item:hover {
+  border-color: var(--border-hover);
+  transform: scale(1.02);
+}
+
+.achievement-icon { font-size: 1.8rem; margin-bottom: var(--space-2); }
+.achievement-name { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); }
+
+/* ── Notification Item ──────────────────────────────────── */
+.notification-item {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast);
+}
+
+.notification-item:hover { background: var(--bg-hover); }
+.notification-item:last-child { border-bottom: none; }
+.notification-item.unread { background: rgba(99, 102, 241, 0.04); }
+
+.notification-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.notification-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin-bottom: 2px;
+}
+
+.notification-msg {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.notification-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── Company Card ───────────────────────────────────────── */
+.company-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--bg-glass-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+  margin-bottom: var(--space-3);
+}
+
+.company-card:hover { border-color: var(--border-hover); }
+.company-card:last-child { margin-bottom: 0; }
+
+.company-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--text-heading);
+  border: 1px solid var(--border);
+}
+
+.company-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-heading);
+}
+
+.company-package {
+  font-size: 0.75rem;
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+/* ── Prediction Result Card ─────────────────────────────── */
+.prediction-result-placed {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.06));
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.prediction-result-not-placed {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* ── AI Advisor Chat ────────────────────────────────────── */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 200px);
+  min-height: 400px;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.chat-message {
+  display: flex;
+  gap: var(--space-3);
+  max-width: 85%;
+}
+
+.chat-message.user { align-self: flex-end; flex-direction: row-reverse; }
+.chat-message.assistant { align-self: flex-start; }
+
+.chat-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.chat-bubble {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.user .chat-bubble {
+  background: var(--grad-primary);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.assistant .chat-bubble {
+  background: var(--bg-card-2);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+  white-space: pre-wrap;
+}
+
+.chat-input-area {
+  border-top: 1px solid var(--border);
+  padding: var(--space-4);
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-end;
+}
+
+.chat-input-area textarea {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  background: var(--bg-glass-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  resize: none;
+  max-height: 120px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.chat-input-area textarea:focus { border-color: var(--primary); }
+
+/* ── Interview Prep ─────────────────────────────────────── */
+.question-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  transition: all var(--transition-base);
+}
+
+.question-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
+}
+
+/* ── Leaderboard ────────────────────────────────────────── */
+.leaderboard-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast);
+}
+
+.leaderboard-item:hover { background: var(--bg-hover); }
+.leaderboard-item:last-child { border-bottom: none; }
+
+.leaderboard-item.me {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.lb-rank {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  min-width: 32px;
+  text-align: center;
+}
+
+.lb-rank.top1 { color: #fbbf24; font-size: 1.3rem; }
+.lb-rank.top2 { color: #94a3b8; font-size: 1.2rem; }
+.lb-rank.top3 { color: #f97316; font-size: 1.1rem; }
+
+.lb-score {
+  margin-left: auto;
+  font-weight: 800;
+  color: var(--text-heading);
+  font-family: var(--font-display);
+}
+
+/* ── Admin Dashboard ────────────────────────────────────── */
+.admin-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  transition: all var(--transition-base);
+}
+
+.admin-stat-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+/* ── Skills Radar Chart ─────────────────────────────────── */
+.radar-chart-container {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/* ── Comprehensive Responsive Media Queries (Desktop, Tablet & Mobile) ───────── */
+@media (max-width: 1200px) {
+  .dashboard-grid { grid-template-columns: 1fr 1fr; }
+  .dashboard-grid-2 { grid-column: 1 / -1; }
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    bottom: 0;
+    z-index: 2000;
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+  }
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  .sidebar .sidebar-link span { display: inline-block; }
+  .sidebar .sidebar-section-title { display: block; }
+  .main-content { margin-left: 0 !important; width: 100% !important; padding: var(--space-5) var(--space-4); }
+  .nav-search { display: none; }
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .dashboard-grid-2, .dashboard-grid-full { grid-column: 1; }
+  .achievements-grid { grid-template-columns: repeat(2, 1fr); }
+  .chat-container { height: 70vh; }
+  .page-header { flex-direction: column; align-items: flex-start !important; gap: var(--space-3); }
+  .page-header > div:last-child { width: 100%; display: flex; flex-direction: column; gap: var(--space-2); }
+  .page-header .btn { width: 100%; justify-content: center; }
+  .card-body { padding: var(--space-4); }
+  .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .leaderboard-item { padding: var(--space-3) var(--space-2); font-size: 0.82rem; }
+  .modal { width: 95% !important; margin: 10px auto; max-height: 90vh; overflow-y: auto; }
+}
+
+@media (max-width: 480px) {
+  .skill-name { min-width: 80px; font-size: 0.72rem; }
+  .achievements-grid { grid-template-columns: repeat(2, 1fr); }
+  .main-content { padding: var(--space-4) var(--space-2); }
+  .card-header { padding: var(--space-3) var(--space-4); }
+  .btn-group { flex-direction: column; width: 100%; }
+  .btn-group .btn { width: 100%; }
+}
+

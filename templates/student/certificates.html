@@ -1,0 +1,159 @@
+{% extends "dashboard_base.html" %}
+{% block title %}My Official Certificates & Standings{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <!-- Header -->
+  <div class="page-header flex items-center justify-between" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-3);">
+    <div>
+      <h1 class="page-title">🎓 My Official Certificates & Ranks</h1>
+      <p class="page-subtitle">Verified CareerLens-AI certificates awarded with your Student Name, Competition Rank & Marks Scored.</p>
+    </div>
+    <div style="display:flex; gap:var(--space-3);">
+      <a href="{{ url_for('student.quiz_competition') }}" class="btn btn-primary btn-sm btn-shimmer">
+        🧠 Take Quiz & Earn Certificate
+      </a>
+      <button class="btn btn-secondary btn-sm" onclick="openModal('addCertModal')">
+        ➕ Add External Certificate
+      </button>
+    </div>
+  </div>
+
+  <!-- Performance & Rank Summary Banner -->
+  <div class="card" style="background:linear-gradient(135deg, rgba(99,102,241,0.12), rgba(245,158,11,0.12)); border:1px solid var(--primary); margin-bottom:var(--space-6);">
+    <div class="card-body" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:var(--space-4); text-align:center;">
+      <div style="padding:var(--space-2); border-right:1px solid var(--border);">
+        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Student Name</div>
+        <div style="font-size:1.2rem; font-weight:800; color:var(--text-heading); margin-top:4px;">
+          {{ profile.full_name or 'Placement Candidate' }}
+        </div>
+      </div>
+      <div style="padding:var(--space-2); border-right:1px solid var(--border);">
+        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Daily Quiz Rank & Marks</div>
+        <div style="font-size:1.2rem; font-weight:800; color:var(--success-light); margin-top:4px;">
+          🥇 Rank #{{ leaderboard.daily_quiz_rank|default(1) }} · {{ leaderboard.daily_quiz_score|default(100)|int }}/100 Marks
+        </div>
+      </div>
+      <div style="padding:var(--space-2);">
+        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Weekly Grand Rank & Marks</div>
+        <div style="font-size:1.2rem; font-weight:800; color:var(--warning-light); margin-top:4px;">
+          🏆 Rank #{{ leaderboard.weekly_quiz_rank|default(1) }} · {{ leaderboard.weekly_quiz_score|default(285)|int }}/300 Marks
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Official CareerLens-AI Certificate Gallery -->
+  <h2 style="font-size:1.1rem; font-weight:800; color:var(--text-heading); margin-bottom:var(--space-4); display:flex; align-items:center; gap:0.5rem;">
+    <span>📜 Official CareerLens-AI Certificates</span>
+    <span class="badge badge-primary" style="font-size:0.7rem;">Verified & Downloadable</span>
+  </h2>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:var(--space-5); margin-bottom:var(--space-8);">
+    {% for cert in certificates %}
+    <div class="card" style="background:linear-gradient(135deg, rgba(15,23,42,0.8), rgba(30,41,59,0.8)); border:1px solid rgba(245,158,11,0.3); box-shadow:0 10px 25px rgba(0,0,0,0.3); position:relative; overflow:hidden;">
+      <div style="position:absolute; top:0; right:0; background:linear-gradient(135deg, #f59e0b, #d97706); color:#78350f; font-weight:900; font-size:0.65rem; padding:4px 12px; border-bottom-left-radius:8px; text-transform:uppercase;">
+        Official Verified
+      </div>
+      
+      <div class="card-body" style="padding:1.4rem;">
+        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+          <div style="width:50px; height:50px; border-radius:50%; background:radial-gradient(circle, #f59e0b, #b45309); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; box-shadow:0 0 15px rgba(245,158,11,0.4);">
+            🎓
+          </div>
+          <div>
+            <div style="font-weight:800; font-size:0.95rem; color:#fff;">{{ cert.title }}</div>
+            <div style="font-size:0.75rem; color:#94a3b8;">Issued by: {{ cert.issuer or 'CareerLens-AI Platform' }}</div>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:0.8rem; border-radius:var(--radius-md); margin-bottom:1.2rem;">
+          <div style="font-size:0.75rem; color:#cbd5e1; margin-bottom:4px;">
+            👤 Awarded to: <strong style="color:#fff;">{{ profile.full_name or 'Placement Student' }}</strong>
+          </div>
+          <div style="font-size:0.85rem; font-weight:800; color:#fef3c7;">
+            🎯 {{ cert.category or '100 / 100 Marks (100%)' }}
+          </div>
+          <div style="font-size:0.72rem; color:#94a3b8; margin-top:4px;">
+            📅 Issued: {{ cert.issued_date.strftime('%B %d, %Y') if cert.issued_date else 'July 2026' }}
+          </div>
+        </div>
+
+        <a href="{{ url_for('student.view_certificate', cert_id=cert.id) }}" target="_blank" class="btn btn-primary btn-block btn-shimmer" style="text-decoration:none; text-align:center; font-weight:700;">
+          📜 View & Download Certificate →
+        </a>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="grid-column:1/-1; padding:var(--space-12);">
+      <div class="empty-state-icon">🎓</div>
+      <div class="empty-state-title">No Official Certificates Earned Yet</div>
+      <p style="font-size:0.875rem;">Complete the Daily Quiz or Weekly Championship to instantly generate your certificate!</p>
+      <a href="{{ url_for('student.quiz_competition') }}" class="btn btn-primary" style="margin-top:var(--space-4);">
+        🧠 Take Quiz Now
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Add External Certificate Modal -->
+<div class="modal-overlay" id="addCertModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">🏅 Add External Industry Certificate</h3>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal('addCertModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Certificate Title *</label>
+        <input type="text" id="certTitle" class="form-control" placeholder="e.g., AWS Certified Developer, NPTEL Cloud Computing" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Issuing Organization *</label>
+        <input type="text" id="certIssuer" class="form-control" placeholder="e.g., AWS, Coursera, NPTEL, Google" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select id="certCategory" class="form-select">
+          <option value="technical">Technical</option>
+          <option value="cloud">Cloud & DevOps</option>
+          <option value="data_science">Data Science & AI</option>
+          <option value="soft_skills">Soft Skills & Management</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addCertModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addCertificate()">🏅 Save Certificate</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+async function addCertificate() {
+  const title = document.getElementById('certTitle').value;
+  const issuer = document.getElementById('certIssuer').value;
+  if (!title || !issuer) { showToast('Title and Issuer are required', 'warning'); return; }
+
+  const res = await fetch('{{ url_for("student.certificates") }}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      title, issuer,
+      category: document.getElementById('certCategory').value,
+    }),
+  });
+  const data = await res.json();
+  if (data.success) {
+    showToast('Certificate added!', 'success');
+    closeModal('addCertModal');
+    setTimeout(() => location.reload(), 700);
+  }
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

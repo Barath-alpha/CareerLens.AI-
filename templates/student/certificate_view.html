@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareerLens-AI Certificate - {{ profile.full_name or 'Student' }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Inter:wght@400;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold-1: #f59e0b;
+      --gold-2: #d97706;
+      --gold-light: #fef3c7;
+      --bg-dark: #0f172a;
+      --primary: #6366f1;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #090d16;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* Certificate Action Bar */
+    .action-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .btn-download {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(99,102,241,0.4);
+    }
+    .btn-download:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,102,241,0.6); }
+    .btn-secondary {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+    }
+    .btn-secondary:hover { background: #334155; }
+
+    /* Certificate Frame */
+    .certificate-container {
+      width: 900px;
+      max-width: 100%;
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      border: 12px solid #1e293b;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(245, 158, 11, 0.15);
+      position: relative;
+      padding: 3rem 4rem;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    /* Inner Gold Foil Border */
+    .certificate-inner-border {
+      border: 3px double #f59e0b;
+      border-radius: 8px;
+      padding: 2.5rem 3rem;
+      position: relative;
+      background: radial-gradient(circle at center, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%);
+    }
+
+    /* Corner Accents */
+    .corner-accent {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 3px solid #f59e0b;
+    }
+    .top-left { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+    .top-right { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+    .bottom-left { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+    .bottom-right { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+    /* Brand Header */
+    .brand-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      letter-spacing: 4px;
+      color: #f59e0b;
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+    .cert-heading {
+      font-family: 'Cinzel', serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 1.5rem;
+    }
+
+    .presented-to {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 0.8rem;
+    }
+
+    /* Student Name */
+    .student-name {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3.8rem;
+      color: #fef3c7;
+      text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+      margin-bottom: 1.2rem;
+      line-height: 1.1;
+    }
+
+    .cert-citation {
+      font-size: 1rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      max-width: 680px;
+      margin: 0 auto 2rem auto;
+    }
+
+    .highlight-text {
+      color: #818cf8;
+      font-weight: 700;
+    }
+
+    /* Certificate Footer Details */
+    .cert-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .signature-block {
+      text-align: center;
+      width: 200px;
+    }
+    .signature-line {
+      border-bottom: 1px solid #64748b;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.3rem;
+      font-family: 'Great Vibes', cursive;
+      font-size: 1.8rem;
+      color: #cbd5e1;
+    }
+    .signature-title {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    /* Verification Badge */
+    .gold-seal {
+      width: 90px;
+      height: 90px;
+      background: radial-gradient(circle, #f59e0b, #b45309);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+      border: 3px solid #fef3c7;
+      color: #78350f;
+      font-weight: 900;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .verification-code {
+      margin-top: 1.5rem;
+      font-size: 0.72rem;
+      color: #64748b;
+      letter-spacing: 2px;
+      font-family: monospace;
+    }
+
+    /* Print styling */
+    @media print {
+      body { background: #fff; color: #000; padding: 0; }
+      .action-bar { display: none; }
+      .certificate-container {
+        box-shadow: none;
+        border: 8px solid #000;
+        background: #fff;
+        color: #000;
+        width: 100%;
+      }
+      .certificate-inner-border { background: #fff; border-color: #000; }
+      .cert-heading, .student-name { -webkit-text-fill-color: initial; color: #000; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <a href="/student/leaderboard" class="btn btn-secondary">⬅️ Back to Leaderboard</a>
+    <button onclick="window.print()" class="btn btn-download">⬇️ Download / Print Certificate</button>
+  </div>
+
+  <!-- Certificate Frame -->
+  <div class="certificate-container" id="certificate">
+    <div class="certificate-inner-border">
+      <div class="corner-accent top-left"></div>
+      <div class="corner-accent top-right"></div>
+      <div class="corner-accent bottom-left"></div>
+      <div class="corner-accent bottom-right"></div>
+
+      <!-- Header -->
+      <div class="brand-title">🎓 CAREERLENS-AI PLATFORM</div>
+      <h1 class="cert-heading">Certificate of Excellence</h1>
+
+      <p class="presented-to">This is proudly awarded to</p>
+
+      <!-- Recipient Name -->
+      <h2 class="student-name">{{ profile.full_name or 'Placement Student' }}</h2>
+
+      <!-- Score Badge -->
+      <div style="display:inline-block; background:linear-gradient(135deg, rgba(245,158,11,0.2), rgba(99,102,241,0.2)); border:1px solid #f59e0b; padding:0.5rem 1.5rem; border-radius:50px; margin-bottom:1.2rem; font-weight:800; font-size:1.1rem; color:#fef3c7;">
+        🎯 MARK SCORED: {{ cert.category }}
+      </div>
+
+      <!-- Citation -->
+      <p class="cert-citation">
+        This official certificate is presented to <strong style="color:#fff;">{{ profile.full_name or 'the candidate' }}</strong> for demonstrating exceptional technical aptitude and achieving distinction in the
+        <span class="highlight-text">{{ cert.title }}</span> with a performance rating of 
+        <span class="highlight-text">{{ cert.score_impact }}%</span>.
+      </p>
+
+      <!-- Footer Signatures & Seal -->
+      <div class="cert-footer">
+        <div class="signature-block">
+          <div class="signature-line">Dr. A. Sharma</div>
+          <div class="signature-title">Director of AI Evaluation</div>
+        </div>
+
+        <div class="gold-seal">
+          <span>★ ★ ★</span>
+          <span>OFFICIAL</span>
+          <span>VERIFIED</span>
+        </div>
+
+        <div class="signature-block">
+          <div class="signature-line">Prof. R. Deshmukh</div>
+          <div class="signature-title">Head of Placement Cell</div>
+        </div>
+      </div>
+
+      <!-- Verification Metadata -->
+      <div class="verification-code">
+        ID: {{ verification_code }} | ISSUED: {{ cert.issued_date.strftime('%B %d, %Y') if cert.issued_date else 'July 2026' }} | VERIFIED BY CAREERLENS-AI
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,133 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Internships{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">💼 Internships</h1>
+      <p class="page-subtitle">Add work experience to significantly boost your placement probability score.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('addInternModal')">
+      <i data-lucide="plus" style="width:16px;height:16px;"></i> Add Internship
+    </button>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:var(--space-5);">
+    {% for intern in internships %}
+    <div class="card">
+      <div class="card-body">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:var(--space-3);">
+          <div>
+            <div style="font-weight:700; font-size:1rem; color:var(--text-heading);">{{ intern.role }}</div>
+            <div style="font-size:0.85rem; color:var(--primary-light); font-weight:600;">{{ intern.company }}</div>
+          </div>
+          <span class="badge {{ 'badge-success' if intern.is_paid else 'badge-primary' }}">
+            {{ '💰 Paid' if intern.is_paid else 'Work Experience' }}
+          </span>
+        </div>
+
+        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:var(--space-3);">
+          ⏱️ Duration: {{ intern.duration_months }} Month{{ 's' if intern.duration_months > 1 }}
+          {% if intern.stipend %}&nbsp;·&nbsp; ₹{{ intern.stipend|int }}/mo{% endif %}
+        </div>
+
+        {% if intern.skills_gained %}
+        <div style="margin-bottom:var(--space-4);">
+          <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Skills Gained</div>
+          <div style="display:flex; flex-wrap:wrap; gap:4px;">
+            {% for skill in intern.skills_gained.split(',') %}
+            <span class="chip" style="font-size:0.68rem;">{{ skill.strip() }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="grid-column:1/-1; padding:var(--space-16);">
+      <div class="empty-state-icon">💼</div>
+      <div class="empty-state-title">No Internships Added</div>
+      <p style="font-size:0.875rem;">Adding internship experience gives your prediction score a major boost!</p>
+      <button class="btn btn-primary" onclick="openModal('addInternModal')" style="margin-top:var(--space-4);">
+        + Add Internship Experience
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Add Internship Modal -->
+<div class="modal-overlay" id="addInternModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">💼 Add Internship Experience</h3>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal('addInternModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Company Name *</label>
+          <input type="text" id="intCompany" class="form-control" placeholder="e.g., Google, Amazon, Startup" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role *</label>
+          <input type="text" id="intRole" class="form-control" placeholder="e.g., Software Engineering Intern" required>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Duration (Months)</label>
+          <input type="number" id="intDuration" class="form-control" min="1" max="24" value="2">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monthly Stipend (₹)</label>
+          <input type="number" id="intStipend" class="form-control" placeholder="Optional">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Skills Gained (comma separated)</label>
+        <input type="text" id="intSkills" class="form-control" placeholder="Python, React, AWS, Docker...">
+      </div>
+      <label class="checkbox-wrapper">
+        <input type="checkbox" id="intPaid" checked>
+        <span class="checkbox-label">This was a paid internship</span>
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addInternModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addInternship()">💼 Add Experience</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+async function addInternship() {
+  const company = document.getElementById('intCompany').value;
+  const role = document.getElementById('intRole').value;
+  if (!company || !role) { showToast('Company and Role are required', 'warning'); return; }
+
+  const res = await fetch('{{ url_for("student.internships") }}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      company, role,
+      duration_months: parseInt(document.getElementById('intDuration').value || 1),
+      stipend: parseFloat(document.getElementById('intStipend').value || 0),
+      skills_gained: document.getElementById('intSkills').value,
+      is_paid: document.getElementById('intPaid').checked,
+    }),
+  });
+  const data = await res.json();
+  if (data.success) {
+    showToast('Internship added!', 'success');
+    closeModal('addInternModal');
+    setTimeout(() => location.reload(), 700);
+  }
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

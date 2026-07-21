@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:2rem;">
+  <div>
+    <div style="font-size:5rem;margin-bottom:1rem;">🚫</div>
+    <h1 style="font-size:5rem;font-weight:900;color:var(--text-heading);">403</h1>
+    <h2 style="font-size:1.5rem;font-weight:700;color:var(--text-secondary);margin-bottom:1rem;">Forbidden</h2>
+    <p style="color:var(--text-muted);max-width:400px;margin:0 auto 2rem;">You don't have permission to access this page.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;">
+      <a href="/" class="btn btn-primary">← Back to Home</a>
+      <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

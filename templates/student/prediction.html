@@ -1,0 +1,285 @@
+{% extends "dashboard_base.html" %}
+{% block title %}AI Prediction{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">🤖 AI Placement Prediction</h1>
+      <p class="page-subtitle">Run the ML model to predict your placement probability with 94% accuracy.</p>
+    </div>
+    <a href="{{ url_for('predict.history') }}" class="btn btn-secondary btn-sm">View History →</a>
+  </div>
+
+  <div style="display:grid; grid-template-columns:2fr 1fr; gap:var(--space-6);">
+
+    <!-- ── Prediction Form ── -->
+    <div class="card">
+      <div class="card-header">
+        <h3 style="font-size:1rem; font-weight:700;">📋 Enter Your Details</h3>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Fields are pre-filled from your profile. Adjust and click predict.</p>
+      </div>
+      <div class="card-body">
+        <form id="predictionForm">
+          <!-- Academic -->
+          <div style="margin-bottom:var(--space-5);">
+            <h4 style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--primary-light); margin-bottom:var(--space-4);">📚 Academic Performance</h4>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">CGPA (0-10)</label>
+                <input type="number" name="cgpa" class="form-control" step="0.1" min="0" max="10"
+                  value="{{ education.cgpa or 7.5 if education else 7.5 }}" placeholder="8.5">
+              </div>
+              <div class="form-group">
+                <label class="form-label">10th % </label>
+                <input type="number" name="tenth_percent" class="form-control" step="0.1" min="0" max="100"
+                  value="{{ education.tenth_percent or 85 if education else 85 }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">12th %</label>
+                <input type="number" name="twelfth_percent" class="form-control" step="0.1" min="0" max="100"
+                  value="{{ education.twelfth_percent or 82 if education else 82 }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Current Sem %</label>
+                <input type="number" name="current_sem_percent" class="form-control" step="0.1" min="0" max="100"
+                  value="{{ education.current_sem_percent or 80 if education else 80 }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Backlogs</label>
+                <input type="number" name="backlogs" class="form-control" min="0"
+                  value="{{ education.backlogs or 0 if education else 0 }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Attendance %</label>
+                <input type="number" name="attendance" class="form-control" step="0.1" min="0" max="100"
+                  value="{{ education.attendance or 85 if education else 85 }}">
+              </div>
+            </div>
+          </div>
+
+          <!-- Skills -->
+          <div style="margin-bottom:var(--space-5);">
+            <h4 style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--primary-light); margin-bottom:var(--space-4);">⚡ Skills (1-10)</h4>
+            <div class="grid-2">
+              {% for field, label, default in [
+                ('technical_score', 'Technical Skills', skills.technical_score if skills else 5),
+                ('communication_score', 'Communication', skills.communication_score if skills else 5),
+                ('programming_score', 'Programming', skills.programming_score if skills else 5),
+                ('aptitude_score', 'Aptitude', skills.aptitude_score if skills else 5),
+                ('logical_reasoning', 'Logical Reasoning', skills.logical_reasoning if skills else 5),
+                ('problem_solving', 'Problem Solving', skills.problem_solving if skills else 5),
+                ('leadership_score', 'Leadership', skills.leadership_score if skills else 5),
+                ('interview_score', 'Interview Readiness', skills.interview_score if skills else 5),
+              ] %}
+              <div class="form-group">
+                <label class="form-label">{{ label }} <span id="{{ field }}_val" style="color:var(--primary-light);">{{ default|int }}</span></label>
+                <input type="range" name="{{ field }}" id="{{ field }}" min="1" max="10" step="0.5"
+                  value="{{ default }}">
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Coding & Experience -->
+          <div style="margin-bottom:var(--space-5);">
+            <h4 style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--primary-light); margin-bottom:var(--space-4);">💻 Coding & Experience</h4>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">LeetCode Solved</label>
+                <input type="number" name="leetcode_solved" class="form-control" min="0"
+                  value="{{ skills.leetcode_solved or 0 if skills else 0 }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">GitHub Activity (0-10)</label>
+                <input type="number" name="github_activity" class="form-control" step="0.1" min="0" max="10"
+                  value="{{ skills.github_activity or 0 if skills else 0 }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Projects Count</label>
+                <input type="number" name="projects_count" class="form-control" min="0"
+                  value="{{ projects|length }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Internships Count</label>
+                <input type="number" name="internships_count" class="form-control" min="0"
+                  value="{{ internships|length }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hackathons</label>
+                <input type="number" name="hackathons_count" class="form-control" min="0"
+                  value="{{ skills.hackathons_participated or 0 if skills else 0 }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Certificates</label>
+                <input type="number" name="certificates_count" class="form-control" min="0"
+                  value="{{ certificates|length }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Contest Rating</label>
+                <input type="number" name="coding_contest_rating" class="form-control" min="0"
+                  value="{{ skills.coding_contest_rating or 0 if skills else 0 }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Resume Score (0-100)</label>
+                <input type="number" name="resume_score" class="form-control" min="0" max="100"
+                  value="{{ profile.resume_score or 50 if profile else 50 }}">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg btn-shimmer" id="predictBtn">
+            <i data-lucide="brain" style="width:18px;height:18px;"></i>
+            <span id="predictBtnText">🚀 Run AI Prediction</span>
+            <span id="predictLoading" style="display:none;">
+              <i data-lucide="loader-2" style="width:16px;height:16px;" class="animate-spin"></i>
+              Analyzing...
+            </span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── Right Panel ── -->
+    <div style="display:flex; flex-direction:column; gap:var(--space-5);">
+
+      <!-- Result Card -->
+      <div class="card" id="resultCard" style="display:{{ 'block' if prediction_history else 'none' }};">
+        <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">🎯 Prediction Result</h3></div>
+        <div class="card-body" id="resultBody">
+          {% if prediction_history %}
+          {% set p = prediction_history[0] %}
+          {% include 'student/_prediction_result_snippet.html' ignore missing %}
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Eligible Companies -->
+      <div class="card">
+        <div class="card-header flex items-center justify-between">
+          <h3 style="font-size:1rem; font-weight:700;">🏢 Eligible Companies</h3>
+          <span class="badge badge-success">{{ eligible_companies|length }}</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          {% for company in eligible_companies[:5] %}
+          <div class="company-card" style="margin:0; border-radius:0; border-left:none; border-right:none; border-top:none; border-bottom:1px solid var(--border);">
+            <div class="company-logo">{{ company.name[:2].upper() }}</div>
+            <div>
+              <div class="company-name">{{ company.name }}</div>
+              <div class="company-package">₹{{ company.package_lpa or 0 }} LPA</div>
+            </div>
+            <span class="badge badge-success" style="margin-left:auto;">✓ Eligible</span>
+          </div>
+          {% else %}
+          <div class="empty-state" style="padding:var(--space-6);">
+            <div class="empty-state-icon">🏢</div>
+            <div class="empty-state-title">Complete profile to see eligible companies</div>
+          </div>
+          {% endfor %}
+          {% if eligible_companies|length > 5 %}
+          <div style="padding:var(--space-3); text-align:center;">
+            <a href="{{ url_for('predict.eligible_companies') }}" class="btn btn-ghost btn-sm">
+              +{{ eligible_companies|length - 5 }} more companies →
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Prediction History -->
+      {% if prediction_history %}
+      <div class="card">
+        <div class="card-header">
+          <h3 style="font-size:1rem; font-weight:700;">📈 Recent Predictions</h3>
+        </div>
+        <div class="card-body" style="padding:0;">
+          {% for pred in prediction_history[:5] %}
+          <div style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border);">
+            <div style="width:8px; height:8px; border-radius:50%; background:{{ '#10b981' if pred.result == 'Placed' else '#ef4444' }};"></div>
+            <div style="flex:1;">
+              <div style="font-size:0.82rem; font-weight:700; color:var(--text-heading);">{{ pred.probability|int }}% — {{ pred.result }}</div>
+              <div style="font-size:0.72rem; color:var(--text-muted);">{{ pred.created_at.strftime('%b %d, %Y') if pred.created_at else '' }}</div>
+            </div>
+            <span class="badge {{ 'badge-success' if pred.result == 'Placed' else 'badge-danger' }}">{{ pred.result }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+document.querySelectorAll('input[type="range"]').forEach(input => {
+  const display = document.getElementById(input.name + '_val');
+  if (display) {
+    display.textContent = parseFloat(input.value).toFixed(1);
+    input.addEventListener('input', () => display.textContent = parseFloat(input.value).toFixed(1));
+  }
+});
+
+document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('predictBtn');
+  document.getElementById('predictBtnText').style.display = 'none';
+  document.getElementById('predictLoading').style.display = 'flex';
+  btn.disabled = true;
+
+  const formData = {};
+  new FormData(e.target).forEach((val, key) => { formData[key] = parseFloat(val) || 0; });
+
+  try {
+    const res = await fetch('{{ url_for("predict.predict") }}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(formData),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      const p = data.prediction;
+      const r = data.readiness;
+      const isPlaced = p.result === 'Placed';
+
+      document.getElementById('resultBody').innerHTML = `
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <div style="font-size:3rem; font-weight:900; color:${isPlaced ? 'var(--accent-green)' : 'var(--accent-red)'}; line-height:1;">${p.probability.toFixed(1)}%</div>
+          <div style="font-size:1.1rem; font-weight:700; margin-top:4px; color:${isPlaced ? 'var(--accent-green)' : 'var(--accent-red)'};">
+            ${isPlaced ? '✅ Likely Placed' : '⚠️ Not Likely Placed'}
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Confidence: ${p.confidence.toFixed(0)}% | Score: ${p.placement_score.toFixed(1)}/100</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1rem;">
+          ${[['Skill', r.skill_score], ['Resume', r.resume_score], ['Interview', r.interview_score], ['Coding', r.coding_score]].map(([label, score]) => `
+            <div style="background:var(--bg-glass-light); border:1px solid var(--border); border-radius:10px; padding:10px;">
+              <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;">${label}</div>
+              <div style="font-size:1.1rem; font-weight:800; color:var(--text-heading);">${Math.round(score)}%</div>
+              <div style="height:3px; background:var(--border); border-radius:10px; margin-top:5px;">
+                <div style="width:${score}%; height:100%; background:var(--grad-primary); border-radius:10px;"></div>
+              </div>
+            </div>`).join('')}
+        </div>
+
+        ${p.strengths.length ? `<div style="margin-bottom:0.75rem;"><div style="font-size:0.72rem; font-weight:700; color:var(--accent-green); text-transform:uppercase; margin-bottom:8px;">💪 Strengths</div>${p.strengths.map(s => `<div class="chip" style="width:100%; justify-content:flex-start; margin-bottom:5px;">✓ ${s}</div>`).join('')}</div>` : ''}
+        ${p.weaknesses.length ? `<div><div style="font-size:0.72rem; font-weight:700; color:var(--accent-orange); text-transform:uppercase; margin-bottom:8px;">⚡ Improve</div>${p.weaknesses.map(w => `<div class="chip" style="width:100%; justify-content:flex-start; margin-bottom:5px;">↑ ${w}</div>`).join('')}</div>` : ''}
+      `;
+
+      document.getElementById('resultCard').style.display = 'block';
+      showToast(`Prediction: ${p.result} (${p.probability.toFixed(1)}%)`, isPlaced ? 'success' : 'warning');
+    }
+  } catch (err) {
+    showToast('Prediction failed. Please try again.', 'danger');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('predictBtnText').style.display = 'flex';
+    document.getElementById('predictLoading').style.display = 'none';
+  }
+});
+
+lucide.createIcons();
+</script>
+{% endblock %}

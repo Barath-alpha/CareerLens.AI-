@@ -1,0 +1,230 @@
+{% extends "dashboard_base.html" %}
+{% block title %}My Profile{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header">
+    <h1 class="page-title">👤 My Profile</h1>
+    <p class="page-subtitle">Complete your profile to improve prediction accuracy.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 2fr; gap:var(--space-6);">
+
+    <!-- Profile Card -->
+    <div style="display:flex; flex-direction:column; gap:var(--space-5);">
+      <div class="card" style="text-align:center;">
+        <div class="card-body">
+          <div style="position:relative; display:inline-block; margin-bottom:var(--space-4);">
+            {% if profile and profile.photo_url %}
+            <img src="{{ profile.photo_url }}" class="avatar avatar-xl" style="border:3px solid var(--border-hover);">
+            {% else %}
+            <div class="avatar avatar-xl" style="background:var(--grad-primary); color:#fff; font-size:1.75rem; font-weight:800; border:3px solid var(--border-hover); display:inline-flex;">
+              {{ (profile.full_name[:2] if profile and profile.full_name else 'ST').upper() }}
+            </div>
+            {% endif %}
+            <label for="photoUpload" style="position:absolute; bottom:0; right:0; width:28px; height:28px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid var(--bg-card);">
+              <i data-lucide="camera" style="width:14px;height:14px;color:#fff;"></i>
+            </label>
+          </div>
+          <h2 style="font-size:1.1rem; font-weight:700;">{{ profile.full_name if profile else 'Add Your Name' }}</h2>
+          <p style="font-size:0.85rem; color:var(--text-muted);">{{ profile.department if profile and profile.department else 'Add Department' }} · {{ profile.college if profile and profile.college else 'Add College' }}</p>
+          {% if profile %}
+          <div style="margin-top:var(--space-4);">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">Profile {{ profile.profile_completeness|int }}% Complete</div>
+            <div class="progress"><div class="progress-bar" style="width:{{ profile.profile_completeness }}%;"></div></div>
+          </div>
+          {% endif %}
+          {% if profile and profile.daily_streak > 0 %}
+          <div class="badge badge-warning" style="margin-top:var(--space-3);">🔥 {{ profile.daily_streak }} Day Streak</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Social Links -->
+      <div class="card">
+        <div class="card-header"><h3 style="font-size:0.9rem; font-weight:700;">🔗 Social Profiles</h3></div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:var(--space-3);">
+          {% for icon, label, key in [
+            ('linkedin', 'LinkedIn', 'linkedin'),
+            ('github', 'GitHub', 'github'),
+            ('globe', 'Portfolio', 'portfolio'),
+            ('code', 'LeetCode', 'leetcode'),
+            ('hash', 'HackerRank', 'hackerrank'),
+          ] %}
+          <div style="display:flex; align-items:center; gap:var(--space-3);">
+            <i data-lucide="{{ icon }}" style="width:16px;height:16px;color:var(--text-muted);flex-shrink:0;"></i>
+            {% set val = profile[key] if profile and profile[key] else '' %}
+            {% if val %}
+            <a href="{{ val }}" target="_blank" style="font-size:0.82rem; color:var(--primary-light); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {{ val.replace('https://', '').replace('http://', '')[:30] }}
+            </a>
+            {% else %}
+            <span style="font-size:0.82rem; color:var(--text-muted); font-style:italic;">Not added</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="card">
+      <div class="card-header">
+        <h3 style="font-size:1rem; font-weight:700;">✏️ Edit Profile</h3>
+      </div>
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" id="profileForm">
+          <input type="file" id="photoUpload" name="photo" accept="image/*" style="display:none;" onchange="this.form.submit()">
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Full Name *</label>
+              <input type="text" name="full_name" class="form-control" value="{{ profile.full_name or '' if profile else '' }}" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" name="phone" class="form-control" value="{{ profile.phone or '' if profile else '' }}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Bio / About Me</label>
+            <textarea name="bio" class="form-control" rows="3" placeholder="Tell us about yourself...">{{ profile.bio or '' if profile else '' }}</textarea>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">College / University</label>
+              <input type="text" name="college" class="form-control" value="{{ profile.college or '' if profile else '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Department</label>
+              <select name="department" class="form-select">
+                {% for dept in ['Computer Science', 'Information Technology', 'Electronics & Communication', 'Electrical Engineering', 'Mechanical Engineering', 'Civil Engineering', 'Data Science', 'MBA', 'Other'] %}
+                <option value="{{ dept }}" {{ 'selected' if profile and profile.department == dept }}>{{ dept }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Year of Study</label>
+              <select name="year" class="form-select">
+                {% for y in [1,2,3,4,5] %}
+                <option value="{{ y }}" {{ 'selected' if profile and profile.year == y }}>Year {{ y }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Expected Salary (LPA)</label>
+              <input type="number" name="expected_salary" class="form-control" step="0.5"
+                value="{{ profile.expected_salary or '' if profile else '' }}" placeholder="e.g., 8.5">
+            </div>
+          </div>
+
+          <h4 style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--primary-light); margin:var(--space-5) 0 var(--space-4);">🔗 Social Profiles</h4>
+          <div class="grid-2">
+            {% for name, placeholder in [
+              ('linkedin', 'https://linkedin.com/in/yourprofile'),
+              ('github', 'https://github.com/yourusername'),
+              ('leetcode', 'https://leetcode.com/yourusername'),
+              ('hackerrank', 'https://hackerrank.com/yourusername'),
+              ('portfolio', 'https://yourportfolio.com'),
+              ('codechef', 'https://codechef.com/users/yourusername'),
+            ] %}
+            <div class="form-group">
+              <label class="form-label">{{ name.capitalize() }}</label>
+              <input type="url" name="{{ name }}" class="form-control" placeholder="{{ placeholder }}"
+                value="{{ profile[name] or '' if profile and profile[name] else '' }}">
+            </div>
+            {% endfor %}
+          </div>
+
+          <h4 style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--primary-light); margin:var(--space-5) 0 var(--space-4);">📄 Resume</h4>
+          <div class="form-group">
+            <label class="form-label">Upload Resume (PDF)</label>
+            <div style="display:flex; align-items:center; gap:var(--space-4);">
+              <input type="file" name="resume" class="form-control" accept=".pdf" style="flex:1;">
+              {% if profile and profile.resume_url %}
+              <a href="{{ profile.resume_url }}" target="_blank" class="btn btn-secondary btn-sm" style="flex-shrink:0;">
+                <i data-lucide="eye" style="width:14px;height:14px;"></i> View
+              </a>
+              {% endif %}
+            </div>
+            {% if profile and profile.resume_score %}
+            <div style="margin-top:var(--space-2); font-size:0.8rem; color:var(--accent-green);">
+              ✓ Resume Score: {{ profile.resume_score|int }}/100
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Education Section -->
+          <h4 style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--primary-light); margin:var(--space-5) 0 var(--space-4);">📚 Academic Details</h4>
+          <div class="grid-2">
+            {% for field, label, step, min, max, val in [
+              ('cgpa', 'CGPA (0-10)', '0.01', '0', '10', education.cgpa if education else ''),
+              ('tenth_percent', '10th %', '0.1', '0', '100', education.tenth_percent if education else ''),
+              ('twelfth_percent', '12th %', '0.1', '0', '100', education.twelfth_percent if education else ''),
+              ('current_sem_percent', 'Current Sem %', '0.1', '0', '100', education.current_sem_percent if education else ''),
+              ('backlogs', 'Backlogs', '1', '0', '20', education.backlogs if education else '0'),
+              ('attendance', 'Attendance %', '0.1', '0', '100', education.attendance if education else ''),
+            ] %}
+            <div class="form-group">
+              <label class="form-label">{{ label }}</label>
+              <input type="number" name="{{ field }}" class="form-control" step="{{ step }}" min="{{ min }}" max="{{ max }}"
+                value="{{ val or '' }}" id="{{ field }}_inp">
+            </div>
+            {% endfor %}
+          </div>
+
+          <div style="display:flex; gap:var(--space-3); margin-top:var(--space-5);">
+            <button type="submit" class="btn btn-primary btn-lg" style="flex:1;">
+              <i data-lucide="save" style="width:16px;height:16px;"></i>
+              Save Profile
+            </button>
+            <button type="button" class="btn btn-secondary btn-lg" onclick="analyzeResume()">
+              <i data-lucide="file-text" style="width:16px;height:16px;"></i>
+              Analyze Resume
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+document.getElementById('profileForm').addEventListener('submit', (e) => {
+  // Also save education data
+  const eduData = {};
+  ['cgpa', 'tenth_percent', 'twelfth_percent', 'current_sem_percent', 'backlogs', 'attendance'].forEach(f => {
+    const el = document.getElementById(f + '_inp');
+    if (el && el.value) eduData[f] = el.value;
+  });
+
+  if (Object.keys(eduData).length) {
+    fetch('{{ url_for("student.update_education") }}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(eduData),
+    });
+  }
+});
+
+async function analyzeResume() {
+  showToast('Analyzing your resume...', 'info', 3000);
+  const res = await fetch('/ai/analyze-resume', { method: 'POST', headers: {'Content-Type': 'application/json'} });
+  const data = await res.json();
+  if (data.success) {
+    const suggestions = data.suggestions.map(s => `• ${s}`).join('\n');
+    alert(`📄 Resume Analysis\n\nScore: ${data.score}/100 (Grade: ${data.grade})\n\nSuggestions:\n${suggestions}`);
+    showToast(`Resume Score: ${data.score}/100 (${data.grade})`, 'success');
+  }
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

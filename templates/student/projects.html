@@ -1,0 +1,175 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Projects{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">💻 Projects</h1>
+      <p class="page-subtitle">Showcase your projects to boost your placement readiness score.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('addProjectModal')">
+      <i data-lucide="plus" style="width:16px;height:16px;"></i> Add Project
+    </button>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:var(--space-5);">
+    {% for project in projects %}
+    <div class="card" style="transition:all var(--transition-base);" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
+      <div class="card-body">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:var(--space-3);">
+          <div>
+            <div style="font-weight:700; font-size:1rem; color:var(--text-heading);">{{ project.title }}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">{{ project.project_type or 'Personal' }}</div>
+          </div>
+          <span class="badge {{ 'badge-success' if project.is_featured else 'badge-primary' }}">
+            {{ '⭐ Featured' if project.is_featured else 'Active' }}
+          </span>
+        </div>
+
+        {% if project.description %}
+        <p style="font-size:0.82rem; color:var(--text-secondary); line-height:1.6; margin-bottom:var(--space-3);">{{ project.description[:150] }}{% if project.description|length > 150 %}...{% endif %}</p>
+        {% endif %}
+
+        {% if project.tech_stack %}
+        <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:var(--space-3);">
+          {% for tech in project.tech_stack.split(',')[:5] %}
+          <span class="chip" style="font-size:0.68rem;">{{ tech.strip() }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+          {% if project.github_url %}
+          <a href="{{ project.github_url }}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:0.75rem;">
+            <i data-lucide="github" style="width:12px;height:12px;"></i> Code
+          </a>
+          {% endif %}
+          {% if project.live_url %}
+          <a href="{{ project.live_url }}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:0.75rem;">
+            <i data-lucide="external-link" style="width:12px;height:12px;"></i> Live
+          </a>
+          {% endif %}
+          <button class="btn btn-ghost btn-icon btn-sm" style="color:var(--accent-red); margin-left:auto;"
+            onclick="deleteProject({{ project.id }})">
+            <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="grid-column:1/-1; padding:var(--space-16);">
+      <div class="empty-state-icon">💻</div>
+      <div class="empty-state-title">No Projects Yet</div>
+      <p style="font-size:0.875rem;">Add your projects to showcase your skills and improve your AI prediction score.</p>
+      <button class="btn btn-primary" onclick="openModal('addProjectModal')" style="margin-top:var(--space-4);">
+        + Add First Project
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Add Project Modal -->
+<div class="modal-overlay" id="addProjectModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3 class="modal-title">💻 Add Project</h3>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal('addProjectModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Project Title *</label>
+        <input type="text" id="projTitle" class="form-control" placeholder="e.g., AI Chatbot, E-Commerce App">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea id="projDesc" class="form-control" rows="3" placeholder="What does it do? What problem does it solve?"></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select id="projType" class="form-select">
+            <option>Personal</option>
+            <option>Academic</option>
+            <option>Open Source</option>
+            <option>Hackathon</option>
+            <option>Internship</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="projStatus" class="form-select">
+            <option value="completed">Completed</option>
+            <option value="in_progress">In Progress</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tech Stack (comma separated)</label>
+        <input type="text" id="projTech" class="form-control" placeholder="Python, React, MongoDB, Docker...">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">GitHub URL</label>
+          <input type="url" id="projGithub" class="form-control" placeholder="https://github.com/...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Live URL</label>
+          <input type="url" id="projLive" class="form-control" placeholder="https://...">
+        </div>
+      </div>
+      <label class="checkbox-wrapper">
+        <input type="checkbox" id="projFeatured">
+        <span class="checkbox-label">⭐ Feature this project on my profile</span>
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addProjectModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addProject()">💻 Add Project</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+async function addProject() {
+  const title = document.getElementById('projTitle').value;
+  if (!title) { showToast('Project title is required', 'warning'); return; }
+
+  const res = await fetch('{{ url_for("student.projects") }}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      title,
+      description: document.getElementById('projDesc').value,
+      project_type: document.getElementById('projType').value,
+      status: document.getElementById('projStatus').value,
+      tech_stack: document.getElementById('projTech').value,
+      github_url: document.getElementById('projGithub').value,
+      live_url: document.getElementById('projLive').value,
+      is_featured: document.getElementById('projFeatured').checked,
+    }),
+  });
+  const data = await res.json();
+  if (data.success) {
+    showToast('Project added!', 'success');
+    closeModal('addProjectModal');
+    setTimeout(() => location.reload(), 700);
+  }
+}
+
+async function deleteProject(id) {
+  if (!confirm('Delete this project?')) return;
+  const res = await fetch(`/student/projects/${id}/delete`, {method:'POST'});
+  const data = await res.json();
+  if (data.success) {
+    showToast('Project deleted', 'success');
+    setTimeout(() => location.reload(), 500);
+  }
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

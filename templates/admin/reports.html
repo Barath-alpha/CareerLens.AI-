@@ -1,0 +1,79 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Placement Reports{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">📊 Placement Reports & Analytics</h1>
+      <p class="page-subtitle">Department-wise placement statistics, prediction distribution, and logs.</p>
+    </div>
+    <div style="display:flex; gap:var(--space-2);">
+      <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Print Report</button>
+      <a href="{{ url_for('api.export_predictions') }}" class="btn btn-primary btn-sm">⬇️ Export CSV</a>
+    </div>
+  </div>
+
+  <!-- Department Placement Rate Grid -->
+  <div class="card" style="margin-bottom:var(--space-6);">
+    <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">🎓 Department Placement Breakdown</h3></div>
+    <div class="card-body">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:var(--space-4);">
+        {% for dept, total, placed in dept_placement %}
+        {% set rate = ((placed or 0) / (total or 1) * 100)|round(1) %}
+        <div style="background:var(--bg-glass-light); border:1px solid var(--border); border-radius:var(--radius-lg); padding:var(--space-4);">
+          <div style="font-size:0.8rem; font-weight:700; color:var(--text-heading); margin-bottom:var(--space-2);">{{ dept or 'General' }}</div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:var(--space-2);">
+            <div style="font-size:1.6rem; font-weight:900; color:var(--primary-light);">{{ rate }}%</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">{{ placed or 0 }} / {{ total }} Placed</div>
+          </div>
+          <div class="progress"><div class="progress-bar" style="width:{{ rate }}%;"></div></div>
+        </div>
+        {% else %}
+        <div class="empty-state" style="grid-column:1/-1;">No placement report data available yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Prediction Log Table -->
+  <div class="card">
+    <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">📋 Prediction Activity Log</h3></div>
+    <div class="table-container" style="border:none; border-radius:0 0 var(--radius-lg) var(--radius-lg);">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Department</th>
+            <th>Result</th>
+            <th>Probability</th>
+            <th>Score</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pred, user, profile in predictions %}
+          <tr>
+            <td>
+              <div style="font-weight:600; font-size:0.85rem;">{{ profile.full_name if profile and profile.full_name else user.email.split('@')[0] }}</div>
+              <div style="font-size:0.72rem; color:var(--text-muted);">{{ user.email }}</div>
+            </td>
+            <td><span class="badge badge-primary">{{ profile.department or 'N/A' if profile else 'N/A' }}</span></td>
+            <td><span class="badge {{ 'badge-success' if pred.result == 'Placed' else 'badge-danger' }}">{{ pred.result }}</span></td>
+            <td style="font-weight:800; color:{{ '#10b981' if pred.result == 'Placed' else '#ef4444' }};">{{ pred.probability|int }}%</td>
+            <td style="font-weight:700;">{{ pred.placement_score|int }}/100</td>
+            <td style="font-size:0.8rem; color:var(--text-muted);">{{ pred.created_at.strftime('%b %d, %Y · %I:%M %p') if pred.created_at else '' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6"><div class="empty-state">No predictions logged yet.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}

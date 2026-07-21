@@ -1,0 +1,118 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Manage Companies{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">🏢 Manage Companies</h1>
+      <p class="page-subtitle">Add and edit companies, salary packages, and eligibility criteria.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('addCompanyModal')">
+      <i data-lucide="plus" style="width:16px;height:16px;"></i> Add Company
+    </button>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:var(--space-5);">
+    {% for company in companies %}
+    <div class="card">
+      <div class="card-body">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:var(--space-3);">
+          <div style="display:flex; align-items:center; gap:var(--space-3);">
+            <div class="company-logo">{{ company.name[:2].upper() }}</div>
+            <div>
+              <div style="font-weight:700; font-size:1rem; color:var(--text-heading);">{{ company.name }}</div>
+              <div style="font-size:0.8rem; color:var(--accent-green); font-weight:700;">₹{{ company.package_lpa or 0 }} LPA</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-icon btn-sm" style="color:var(--accent-red);"
+            onclick="deleteCompany({{ company.id }})">
+            <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+          </button>
+        </div>
+
+        <div style="display:flex; gap:var(--space-3); font-size:0.78rem; color:var(--text-muted); margin-bottom:var(--space-3);">
+          <span>Min CGPA: <strong>{{ company.min_cgpa }}</strong></span>
+          <span>Max Backlogs: <strong>{{ company.max_backlogs }}</strong></span>
+        </div>
+
+        {% if company.description %}
+        <p style="font-size:0.82rem; color:var(--text-secondary); line-height:1.5; margin-bottom:var(--space-3);">{{ company.description }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="grid-column:1/-1; padding:var(--space-16);">
+      <div class="empty-state-icon">🏢</div>
+      <div class="empty-state-title">No Companies Added</div>
+      <p style="font-size:0.875rem;">Add companies to enable automated student eligibility matching.</p>
+      <button class="btn btn-primary" onclick="openModal('addCompanyModal')" style="margin-top:var(--space-4);">
+        + Add First Company
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Add Company Modal -->
+<div class="modal-overlay" id="addCompanyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">🏢 Add Recruiting Company</h3>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal('addCompanyModal')">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.companies') }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Company Name *</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g., Google, TCS, Zoho" required>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Package (LPA ₹) *</label>
+            <input type="number" name="package_lpa" class="form-control" step="0.5" placeholder="e.g., 12.0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Min CGPA Required</label>
+            <input type="number" name="min_cgpa" class="form-control" step="0.1" min="0" max="10" value="6.0">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Max Allowed Backlogs</label>
+            <input type="number" name="max_backlogs" class="form-control" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Required Skills (comma separated)</label>
+            <input type="text" name="required_skills" class="form-control" placeholder="Python, DSA, SQL">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description / Job Role</label>
+          <textarea name="description" class="form-control" rows="2" placeholder="Software Engineer / Product Analyst"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addCompanyModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">🏢 Save Company</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+async function deleteCompany(id) {
+  if (!confirm('Delete this company entry?')) return;
+  const res = await fetch(`/admin/companies/${id}/delete`, { method: 'POST' });
+  const data = await res.json();
+  if (data.success) {
+    showToast('Company deleted', 'success');
+    setTimeout(() => location.reload(), 600);
+  }
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

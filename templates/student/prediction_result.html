@@ -1,0 +1,108 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Prediction Result{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">🎯 AI Prediction Result</h1>
+      <p class="page-subtitle">Generated on {{ prediction.created_at.strftime('%B %d, %Y · %I:%M %p') if prediction.created_at else '' }}</p>
+    </div>
+    <div style="display:flex; gap:var(--space-2);">
+      <a href="{{ url_for('predict.predict') }}" class="btn btn-secondary btn-sm">← Run New Prediction</a>
+      <a href="{{ url_for('student.ai_advisor') }}" class="btn btn-primary btn-sm">🤖 Get AI Roadmap</a>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-6);">
+
+    <!-- Main Score Card -->
+    <div class="card" style="text-align:center;">
+      <div class="card-body">
+        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); font-weight:700; margin-bottom:var(--space-4);">Placement Probability</div>
+
+        <div style="position:relative; width:160px; height:160px; margin:0 auto var(--space-4);">
+          <svg width="160" height="160" viewBox="0 0 160 160" style="transform:rotate(-90deg);">
+            <circle cx="80" cy="80" r="68" fill="none" stroke="var(--border)" stroke-width="12"/>
+            <circle cx="80" cy="80" r="68" fill="none"
+              stroke="{{ '#10b981' if prediction.result == 'Placed' else '#ef4444' }}"
+              stroke-width="12"
+              stroke-linecap="round"
+              stroke-dasharray="427.2"
+              stroke-dashoffset="{{ 427.2 * (1 - prediction.probability / 100) }}"/>
+          </svg>
+          <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div style="font-size:2.5rem; font-weight:900; color:var(--text-heading); font-family:var(--font-display); line-height:1;">
+              {{ prediction.probability|int }}%
+            </div>
+            <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); margin-top:4px;">{{ prediction.result }}</div>
+          </div>
+        </div>
+
+        <div class="badge {{ 'badge-success' if prediction.result == 'Placed' else 'badge-danger' }}" style="font-size:0.9rem; padding:6px 16px;">
+          {{ '✅ High Placement Probability' if prediction.result == 'Placed' else '⚠️ Needs Improvement to Guarantee Placement' }}
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3); margin-top:var(--space-6); text-align:left;">
+          <div style="background:var(--bg-glass-light); border:1px solid var(--border); border-radius:var(--radius-lg); padding:var(--space-3);">
+            <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">AI Confidence</div>
+            <div style="font-size:1.2rem; font-weight:800; color:var(--text-heading);">{{ prediction.confidence|int }}%</div>
+          </div>
+          <div style="background:var(--bg-glass-light); border:1px solid var(--border); border-radius:var(--radius-lg); padding:var(--space-3);">
+            <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Readiness Index</div>
+            <div style="font-size:1.2rem; font-weight:800; color:var(--text-heading);">{{ prediction.placement_score|int }}/100</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details Card -->
+    <div style="display:flex; flex-direction:column; gap:var(--space-5);">
+      <!-- Strengths -->
+      <div class="card">
+        <div class="card-header"><h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-green);">💪 Your Top Strengths</h3></div>
+        <div class="card-body">
+          {% for s in prediction.to_dict().strengths %}
+          <div class="chip" style="width:100%; justify-content:flex-start; margin-bottom:var(--space-2); background:rgba(16,185,129,0.1); border-color:rgba(16,185,129,0.2); color:var(--accent-green);">
+            ✓ {{ s }}
+          </div>
+          {% else %}
+          <div style="font-size:0.85rem; color:var(--text-muted);">Complete your profile to highlight strengths.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Weaknesses -->
+      <div class="card">
+        <div class="card-header"><h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-orange);">⚡ Recommended Improvements</h3></div>
+        <div class="card-body">
+          {% for w in prediction.to_dict().weaknesses %}
+          <div class="chip" style="width:100%; justify-content:flex-start; margin-bottom:var(--space-2); background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.2); color:var(--accent-orange);">
+            ↑ {{ w }}
+          </div>
+          {% else %}
+          <div style="font-size:0.85rem; color:var(--accent-green);">Awesome! Your profile meets all key benchmarks.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Suggestions -->
+      <div class="card">
+        <div class="card-header"><h3 style="font-size:0.95rem; font-weight:700;">💡 Actionable Suggestions</h3></div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:var(--space-2);">
+          {% for sug in prediction.to_dict().suggestions %}
+          <div style="font-size:0.82rem; color:var(--text-secondary); padding:var(--space-2) var(--space-3); background:var(--bg-glass-light); border-radius:var(--radius-md); border:1px solid var(--border);">
+            → {{ sug }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}

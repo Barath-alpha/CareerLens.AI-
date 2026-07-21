@@ -1,0 +1,502 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <!-- Page Header -->
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">
+        {% set hour = now.hour if now is defined else 10 %}
+        {% if hour < 12 %}Good morning{% elif hour < 17 %}Good afternoon{% else %}Good evening{% endif %},
+        {{ profile.full_name.split()[0] if profile and profile.full_name else 'Student' }}! 👋
+      </h1>
+      <p class="page-subtitle">Here's your placement readiness overview for today.</p>
+    </div>
+    <div class="page-actions">
+      {% if profile and profile.daily_streak > 0 %}
+      <div class="badge badge-warning">🔥 {{ profile.daily_streak }} Day Streak</div>
+      {% endif %}
+      <a href="{{ url_for('predict.predict') }}" class="btn btn-primary btn-sm btn-shimmer">
+        <i data-lucide="brain" style="width:14px;height:14px;"></i>
+        Run AI Prediction
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-grid">
+    <div class="stat-card primary">
+      <div class="stat-icon primary"><i data-lucide="trending-up" style="width:20px;height:20px;"></i></div>
+      <div class="stat-value">{{ readiness.overall_score|int }}%</div>
+      <div class="stat-label">Overall Readiness</div>
+      <div class="stat-change up">↑ Placement Score</div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon success"><i data-lucide="graduation-cap" style="width:20px;height:20px;"></i></div>
+      <div class="stat-value">{{ education.cgpa or '–' }}</div>
+      <div class="stat-label">CGPA</div>
+      <div class="stat-change {{ 'up' if education and education.cgpa and education.cgpa >= 7 else 'down' }}">
+        {{ 'Above threshold' if education and education.cgpa and education.cgpa >= 7 else 'Below 7.0 threshold' }}
+      </div>
+    </div>
+    <div class="stat-card info">
+      <div class="stat-icon info"><i data-lucide="code-2" style="width:20px;height:20px;"></i></div>
+      <div class="stat-value">{{ skills.leetcode_solved or 0 }}</div>
+      <div class="stat-label">LeetCode Solved</div>
+      <div class="stat-change {{ 'up' if skills and skills.leetcode_solved and skills.leetcode_solved >= 100 else 'down' }}">
+        Target: 200+
+      </div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-icon warning"><i data-lucide="code" style="width:20px;height:20px;"></i></div>
+      <div class="stat-value">{{ projects|length }}</div>
+      <div class="stat-label">Projects Built</div>
+      <div class="stat-change {{ 'up' if projects|length >= 3 else 'down' }}">
+        {{ 'Great!' if projects|length >= 3 else 'Target: 3+' }}
+      </div>
+    </div>
+    <div class="stat-card primary">
+      <div class="stat-icon primary"><i data-lucide="briefcase" style="width:20px;height:20px;"></i></div>
+      <div class="stat-value">{{ internships|length }}</div>
+      <div class="stat-label">Internships</div>
+      <div class="stat-change {{ 'up' if internships|length >= 1 else 'down' }}">
+        {{ 'Good experience!' if internships|length >= 1 else 'Get one!' }}
+      </div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon success"><i data-lucide="award" style="width:20px;height:20px;"></i></div>
+      <div class="stat-value">{{ certificates|length }}</div>
+      <div class="stat-label">Certificates</div>
+      <div class="stat-change up">{{ certificates|length }} earned</div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="dashboard-grid">
+
+    <!-- ── AI Prediction Card ── -->
+    <div class="card dashboard-grid-2">
+      <div class="card-header flex items-center justify-between">
+        <h3 style="font-size:1rem; font-weight:700;">🤖 AI Placement Prediction</h3>
+        <a href="{{ url_for('predict.predict') }}" class="btn btn-primary btn-sm">Run Prediction</a>
+      </div>
+      <div class="card-body">
+        {% if latest_prediction %}
+        <div style="display:grid; grid-template-columns:auto 1fr; gap:var(--space-6); align-items:center;">
+          <!-- Score Ring -->
+          <div class="score-ring-container">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+              <circle cx="70" cy="70" r="58" fill="none" stroke="var(--border)" stroke-width="10"/>
+              <circle cx="70" cy="70" r="58" fill="none"
+                stroke="{{ '#10b981' if latest_prediction.result == 'Placed' else '#ef4444' }}"
+                stroke-width="10"
+                stroke-linecap="round"
+                stroke-dasharray="364.4"
+                stroke-dashoffset="{{ 364.4 * (1 - latest_prediction.probability / 100) }}"
+                id="mainRing"/>
+            </svg>
+            <div class="score-center-text">
+              <div class="score-value">{{ latest_prediction.probability|int }}%</div>
+              <div class="score-label">{{ latest_prediction.result }}</div>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <div>
+            <div class="flex items-center gap-2" style="margin-bottom:var(--space-4);">
+              <span class="badge {{ 'badge-success' if latest_prediction.result == 'Placed' else 'badge-danger' }}">
+                {{ latest_prediction.result }}
+              </span>
+              <span class="badge badge-info">{{ latest_prediction.confidence|int }}% Confidence</span>
+              <span class="text-xs text-muted">{{ latest_prediction.created_at.strftime('%b %d, %Y') if latest_prediction.created_at else '' }}</span>
+            </div>
+
+            <!-- Readiness Breakdown -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3);">
+              {% for label, score, color in [
+                ('Skill Score', readiness.skill_score, '#6366f1'),
+                ('Resume Score', readiness.resume_score, '#8b5cf6'),
+                ('Interview Score', readiness.interview_score, '#06b6d4'),
+                ('Coding Score', readiness.coding_score, '#10b981'),
+                ('Communication', readiness.communication_score, '#f59e0b'),
+                ('Overall', readiness.overall_score, '#6366f1'),
+              ] %}
+              <div>
+                <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">{{ label }}</div>
+                <div class="progress" style="height:5px; margin-bottom:4px;">
+                  <div class="progress-bar" style="width:{{ score }}%; background:{{ color }};"></div>
+                </div>
+                <div style="font-size:0.78rem; font-weight:700; color:var(--text-heading);">{{ score|int }}%</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Strengths & Weaknesses -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4); margin-top:var(--space-5);">
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:var(--accent-green); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:var(--space-3);">💪 Strengths</div>
+            {% for s in latest_prediction.to_dict().strengths %}
+            <div class="chip" style="margin-bottom:6px; width:100%; justify-content:flex-start;">✓ {{ s }}</div>
+            {% else %}
+            <div class="text-muted text-sm">Complete profile to see strengths</div>
+            {% endfor %}
+          </div>
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:var(--accent-orange); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:var(--space-3);">⚡ Improve</div>
+            {% for w in latest_prediction.to_dict().weaknesses %}
+            <div class="chip" style="margin-bottom:6px; width:100%; justify-content:flex-start;">↑ {{ w }}</div>
+            {% else %}
+            <div class="text-muted text-sm">All good! Keep it up!</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        {% else %}
+        <!-- No prediction yet -->
+        <div class="empty-state">
+          <div class="empty-state-icon">🤖</div>
+          <div class="empty-state-title">No Prediction Yet</div>
+          <p style="font-size:0.85rem; margin-bottom:var(--space-5);">Complete your profile and run your first AI placement prediction to see results here.</p>
+          <a href="{{ url_for('predict.predict') }}" class="btn btn-primary btn-shimmer">
+            🎯 Run First Prediction
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Skills Radar ── -->
+    <div class="card">
+      <div class="card-header">
+        <h3 style="font-size:1rem; font-weight:700;">📊 Skill Radar</h3>
+      </div>
+      <div class="card-body">
+        <div class="radar-chart-container">
+          <canvas id="radarChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Profile Completeness ── -->
+    <div class="card">
+      <div class="card-header flex items-center justify-between">
+        <h3 style="font-size:1rem; font-weight:700;">👤 Profile Health</h3>
+        <a href="{{ url_for('student.profile') }}" class="btn btn-ghost btn-sm">Edit →</a>
+      </div>
+      <div class="card-body">
+        <!-- Completion Ring -->
+        <div style="text-align:center; margin-bottom:var(--space-5);">
+          <svg width="100" height="100" viewBox="0 0 100 100" style="transform:rotate(-90deg);">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--border)" stroke-width="8"/>
+            <circle cx="50" cy="50" r="40" fill="none"
+              stroke="url(#completionGrad)"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-dasharray="251.3"
+              stroke-dashoffset="{{ 251.3 * (1 - (profile.profile_completeness or 0) / 100) }}"/>
+            <defs>
+              <linearGradient id="completionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#6366f1"/>
+                <stop offset="100%" style="stop-color:#06b6d4"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div style="margin-top:-60px; font-size:1.4rem; font-weight:800; color:var(--text-heading);">
+            {{ profile.profile_completeness|int if profile else 0 }}%
+          </div>
+          <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em; margin-top:50px;">Complete</div>
+        </div>
+
+        <!-- Checklist -->
+        {% set checks = [
+          ('Full Name', profile and profile.full_name),
+          ('Phone Number', profile and profile.phone),
+          ('College & Dept.', profile and profile.college and profile.department),
+          ('CGPA & Education', education and education.cgpa),
+          ('Skills Assessment', skills and skills.technical_score > 0),
+          ('Resume Upload', profile and profile.resume_url),
+          ('GitHub Profile', profile and profile.github),
+          ('LinkedIn Profile', profile and profile.linkedin),
+          ('Project Added', projects|length > 0),
+        ] %}
+        {% for label, done in checks %}
+        <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-2);">
+          <span style="color:{{ 'var(--accent-green)' if done else 'var(--text-muted)' }}; font-size:0.9rem;">
+            {{ '✓' if done else '○' }}
+          </span>
+          <span style="font-size:0.8rem; color:{{ 'var(--text-secondary)' if done else 'var(--text-muted)' }};">
+            {{ label }}
+          </span>
+          {% if not done %}
+          <span class="badge badge-warning" style="margin-left:auto; font-size:0.6rem;">Missing</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ── Daily Goals ── -->
+    <div class="card">
+      <div class="card-header flex items-center justify-between">
+        <h3 style="font-size:1rem; font-weight:700;">🎯 Daily Goals</h3>
+        <a href="{{ url_for('student.goals') }}" class="btn btn-ghost btn-sm">All Goals →</a>
+      </div>
+      <div class="card-body">
+        {% if goals %}
+        {% for goal in goals %}
+        <div class="goal-item">
+          <div class="goal-header">
+            <span class="goal-title-text">{{ goal.title }}</span>
+            <span class="goal-percent">{{ goal.progress|int }}%</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar {{ 'success' if goal.progress >= 100 else ('warning' if goal.progress >= 50 else '') }}"
+              style="width:{{ goal.progress }}%;">
+            </div>
+          </div>
+          <div style="font-size:0.72rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+            <span class="badge badge-{{ 'primary' if goal.type == 'daily' else ('info' if goal.type == 'weekly' else 'success') }}" style="font-size:0.6rem;">
+              {{ goal.type }}
+            </span>
+            {{ '✅ Completed!' if goal.is_completed else '' }}
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state" style="padding:var(--space-8);">
+          <div class="empty-state-icon">🎯</div>
+          <div class="empty-state-title">No Goals Set</div>
+          <a href="{{ url_for('student.goals') }}" class="btn btn-primary btn-sm" style="margin-top:var(--space-3);">Add Goals →</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── AI Suggestions ── -->
+    {% if latest_prediction %}
+    <div class="card">
+      <div class="card-header">
+        <h3 style="font-size:1rem; font-weight:700;">💡 AI Suggestions</h3>
+      </div>
+      <div class="card-body">
+        {% for suggestion in latest_prediction.to_dict().suggestions %}
+        <div style="display:flex; gap:var(--space-3); margin-bottom:var(--space-3); padding:var(--space-3); background:var(--bg-glass-light); border-radius:var(--radius-md); border:1px solid var(--border);">
+          <span style="color:var(--primary-light); font-size:0.9rem; flex-shrink:0;">→</span>
+          <span style="font-size:0.82rem; color:var(--text-secondary); line-height:1.5;">{{ suggestion }}</span>
+        </div>
+        {% endfor %}
+        <div style="margin-top:var(--space-4);">
+          <a href="{{ url_for('student.ai_advisor') }}" class="btn btn-primary btn-sm btn-block">
+            🤖 Ask AI Advisor for More Tips
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Recent Notifications ── -->
+    <div class="card">
+      <div class="card-header flex items-center justify-between">
+        <h3 style="font-size:1rem; font-weight:700;">🔔 Notifications</h3>
+        <a href="{{ url_for('student.notifications') }}" class="btn btn-ghost btn-sm">All →</a>
+      </div>
+      <div style="overflow:hidden; border-radius:0 0 var(--radius-lg) var(--radius-lg);">
+        {% if notifications %}
+        {% for notif in notifications %}
+        <div class="notification-item {{ 'unread' if not notif.is_read }}">
+          <div class="notification-icon" style="background:{{ 'rgba(16,185,129,0.15)' if notif.type == 'success' else 'rgba(99,102,241,0.15)' }};">
+            {{ '✅' if notif.type == 'success' else ('⚠️' if notif.type == 'warning' else 'ℹ️') }}
+          </div>
+          <div style="min-width:0;">
+            <div class="notification-title">{{ notif.title }}</div>
+            <div class="notification-msg truncate">{{ notif.message or '' }}</div>
+            <div class="notification-time">{{ notif.created_at.strftime('%b %d · %I:%M %p') if notif.created_at else '' }}</div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state" style="padding:var(--space-8);">
+          <div class="empty-state-icon">🔔</div>
+          <div class="empty-state-title">All caught up!</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Skill Progress ── -->
+    <div class="card dashboard-grid-2">
+      <div class="card-header">
+        <h3 style="font-size:1rem; font-weight:700;">⚡ Skill Breakdown</h3>
+      </div>
+      <div class="card-body" style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-6);">
+        {% if skills %}
+        <div>
+          {% for label, val, color in [
+            ('Technical Skills', skills.technical_score * 10, '#6366f1'),
+            ('Programming', skills.programming_score * 10, '#8b5cf6'),
+            ('Communication', skills.communication_score * 10, '#06b6d4'),
+            ('Aptitude', skills.aptitude_score * 10, '#f59e0b'),
+          ] %}
+          <div class="skill-item">
+            <span class="skill-name">{{ label }}</span>
+            <div class="skill-bar-wrap">
+              <div class="progress" style="flex:1;">
+                <div class="progress-bar" style="width:{{ val }}%; background:{{ color }};"></div>
+              </div>
+              <span class="skill-value">{{ val|int }}%</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div>
+          {% for label, val, color in [
+            ('Problem Solving', skills.problem_solving * 10, '#10b981'),
+            ('Logical Reasoning', skills.logical_reasoning * 10, '#f43f5e'),
+            ('Leadership', skills.leadership_score * 10, '#f59e0b'),
+            ('Soft Skills', skills.soft_skills * 10, '#06b6d4'),
+          ] %}
+          <div class="skill-item">
+            <span class="skill-name">{{ label }}</span>
+            <div class="skill-bar-wrap">
+              <div class="progress" style="flex:1;">
+                <div class="progress-bar" style="width:{{ val }}%; background:{{ color }};"></div>
+              </div>
+              <span class="skill-value">{{ val|int }}%</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state dashboard-grid-full" style="padding:var(--space-8);">
+          <div class="empty-state-icon">⚡</div>
+          <div class="empty-state-title">Skills Not Assessed Yet</div>
+          <a href="{{ url_for('student.skills') }}" class="btn btn-primary btn-sm" style="margin-top:var(--space-3);">Assess Skills →</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Achievements ── -->
+    {% if achievements %}
+    <div class="card">
+      <div class="card-header">
+        <h3 style="font-size:1rem; font-weight:700;">🏆 Achievements</h3>
+      </div>
+      <div class="card-body">
+        <div class="achievements-grid">
+          {% for a in achievements %}
+          <div class="achievement-item" title="{{ a.description or '' }}">
+            <div class="achievement-icon">{{ a.badge_icon or '🏅' }}</div>
+            <div class="achievement-name">{{ a.title }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Quick Actions ── -->
+    <div class="card">
+      <div class="card-header">
+        <h3 style="font-size:1rem; font-weight:700;">⚡ Quick Actions</h3>
+      </div>
+      <div class="card-body" style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3);">
+        <a href="{{ url_for('predict.predict') }}" class="btn btn-primary btn-sm" style="justify-content:flex-start; gap:var(--space-2);">
+          <i data-lucide="brain" style="width:14px;height:14px;"></i> Predict
+        </a>
+        <a href="{{ url_for('student.ai_advisor') }}" class="btn btn-secondary btn-sm" style="justify-content:flex-start; gap:var(--space-2);">
+          <i data-lucide="bot" style="width:14px;height:14px;"></i> AI Chat
+        </a>
+        <a href="{{ url_for('student.skills') }}" class="btn btn-secondary btn-sm" style="justify-content:flex-start; gap:var(--space-2);">
+          <i data-lucide="zap" style="width:14px;height:14px;"></i> Skills
+        </a>
+        <a href="{{ url_for('student.profile') }}" class="btn btn-secondary btn-sm" style="justify-content:flex-start; gap:var(--space-2);">
+          <i data-lucide="user" style="width:14px;height:14px;"></i> Profile
+        </a>
+        <a href="{{ url_for('student.interview_prep') }}" class="btn btn-secondary btn-sm" style="justify-content:flex-start; gap:var(--space-2);">
+          <i data-lucide="mic" style="width:14px;height:14px;"></i> Interview
+        </a>
+        <a href="{{ url_for('student.leaderboard') }}" class="btn btn-secondary btn-sm" style="justify-content:flex-start; gap:var(--space-2);">
+          <i data-lucide="trophy" style="width:14px;height:14px;"></i> Leaderboard
+        </a>
+        <a href="{{ url_for('predict.eligible_companies') }}" class="btn btn-secondary btn-sm" style="justify-content:flex-start; gap:var(--space-2);">
+          <i data-lucide="building" style="width:14px;height:14px;"></i> Companies
+        </a>
+        <a href="{{ url_for('student.goals') }}" class="btn btn-secondary btn-sm" style="justify-content:flex-start; gap:var(--space-2);">
+          <i data-lucide="target" style="width:14px;height:14px;"></i> Goals
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /dashboard-grid -->
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+// Radar Chart
+const radarCtx = document.getElementById('radarChart')?.getContext('2d');
+if (radarCtx) {
+  new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+      labels: ['Technical', 'Communication', 'Aptitude', 'Programming', 'Problem Solving', 'Leadership', 'Soft Skills', 'Interview'],
+      datasets: [{
+        label: 'Your Skills',
+        data: [
+          {{ skills.technical_score if skills else 5 }},
+          {{ skills.communication_score if skills else 5 }},
+          {{ skills.aptitude_score if skills else 5 }},
+          {{ skills.programming_score if skills else 5 }},
+          {{ skills.problem_solving if skills else 5 }},
+          {{ skills.leadership_score if skills else 5 }},
+          {{ skills.soft_skills if skills else 5 }},
+          {{ skills.interview_score if skills else 5 }},
+        ],
+        fill: true,
+        backgroundColor: 'rgba(99, 102, 241, 0.12)',
+        borderColor: '#6366f1',
+        pointBackgroundColor: '#6366f1',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#6366f1',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        r: {
+          min: 0, max: 10,
+          ticks: { stepSize: 2, color: 'rgba(148, 163, 184, 0.6)', font: { size: 9 } },
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          angleLines: { color: 'rgba(255,255,255,0.06)' },
+          pointLabels: { color: '#94a3b8', font: { size: 10, weight: '600' } },
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      },
+      animation: { duration: 1500, easing: 'easeOutQuart' }
+    }
+  });
+}
+
+// Animate stats counters
+document.querySelectorAll('.stat-value').forEach(el => {
+  const target = parseFloat(el.textContent);
+  if (isNaN(target)) return;
+  let start = 0;
+  const step = target / 40;
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= target) { start = target; clearInterval(timer); }
+    el.textContent = Number.isInteger(target) ? Math.round(start) : start.toFixed(1);
+  }, 30);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Notifications{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">🔔 Notifications</h1>
+      <p class="page-subtitle">Stay up to date with placement events, predictions, and reminders.</p>
+    </div>
+    {% if notifications|selectattr('is_read', 'equalto', False)|list|length > 0 %}
+    <button class="btn btn-secondary btn-sm" onclick="markAllRead()">
+      ✓ Mark All as Read
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    {% if notifications %}
+    {% for notif in notifications %}
+    <div class="notification-item {{ 'unread' if not notif.is_read }}" id="notif_{{ notif.id }}">
+      <div class="notification-icon" style="background:{{ 'rgba(16,185,129,0.15)' if notif.type == 'success' else ('rgba(245,158,11,0.15)' if notif.type == 'warning' else 'rgba(99,102,241,0.15)') }};">
+        {{ '✅' if notif.type == 'success' else ('⚠️' if notif.type == 'warning' else 'ℹ️') }}
+      </div>
+      <div style="flex:1; min-width:0;">
+        <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:2px;">
+          <div class="notification-title">{{ notif.title }}</div>
+          {% if not notif.is_read %}
+          <span class="badge badge-primary" style="font-size:0.6rem; padding:2px 6px;">New</span>
+          {% endif %}
+        </div>
+        {% if notif.message %}
+        <div class="notification-msg">{{ notif.message }}</div>
+        {% endif %}
+        <div class="notification-time">{{ notif.created_at.strftime('%B %d, %Y · %I:%M %p') if notif.created_at else '' }}</div>
+      </div>
+      <div style="display:flex; gap:var(--space-2); flex-shrink:0;">
+        {% if not notif.is_read %}
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="markRead({{ notif.id }})" title="Mark as read">
+          <i data-lucide="check" style="width:14px;height:14px;"></i>
+        </button>
+        {% endif %}
+        <button class="btn btn-ghost btn-icon btn-sm" style="color:var(--text-muted);"
+          onclick="deleteNotif({{ notif.id }})" title="Delete">
+          <i data-lucide="x" style="width:14px;height:14px;"></i>
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state" style="padding:var(--space-16);">
+      <div class="empty-state-icon">🔔</div>
+      <div class="empty-state-title">No Notifications</div>
+      <p style="font-size:0.875rem;">You're all caught up! Notifications will appear here.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+async function markRead(id) {
+  await fetch(`/api/notifications/${id}/read`, {method:'POST'});
+  const item = document.getElementById(`notif_${id}`);
+  if (item) {
+    item.classList.remove('unread');
+    item.querySelector('.badge')?.remove();
+    item.querySelector('[onclick*="markRead"]')?.remove();
+  }
+}
+
+async function markAllRead() {
+  await fetch('/api/notifications/read-all', {method:'POST'});
+  document.querySelectorAll('.notification-item.unread').forEach(el => el.classList.remove('unread'));
+  document.querySelectorAll('.notification-item .badge-primary').forEach(el => el.remove());
+  showToast('All marked as read', 'success');
+}
+
+async function deleteNotif(id) {
+  const res = await fetch(`/api/notifications/${id}/delete`, {method:'POST'});
+  if ((await res.json()).success) {
+    document.getElementById(`notif_${id}`)?.remove();
+  }
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

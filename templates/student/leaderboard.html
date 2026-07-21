@@ -1,0 +1,418 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Placement MCQ Competitions & Leaderboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-3);">
+    <div>
+      <h1 class="page-title">🏆 Leaderboard & MCQ Competitions</h1>
+      <p class="page-subtitle">Compete in Daily & Weekly Placement MCQ Quizzes. Compare your marks & rank!</p>
+    </div>
+    <div style="display:flex; gap:var(--space-2);">
+      <button class="btn btn-primary btn-sm btn-shimmer" onclick="startQuiz('daily')">⚡ Start Daily Quiz</button>
+      <button class="btn btn-secondary btn-sm" onclick="startQuiz('weekly')">🏆 Join Weekly Championship</button>
+    </div>
+  </div>
+
+  <!-- My Rank Summary Card -->
+  {% if my_rank %}
+  <div class="card" style="margin-bottom:var(--space-5); background:linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.06)); border:1px solid rgba(99,102,241,0.25);">
+    <div class="card-body" style="display:flex; align-items:center; gap:var(--space-5); flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:var(--space-4);">
+        <div style="font-size:2.8rem; font-weight:900; color:var(--primary-light);">#{{ my_rank.rank or '-' }}</div>
+        <div>
+          <div style="font-weight:700; font-size:1.1rem; color:var(--text-heading);">Overall Rank</div>
+          <div style="font-size:0.85rem; color:var(--text-secondary);">Readiness Index: {{ my_rank.score|int }} pts</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:var(--space-6); margin-left:auto; text-align:center;">
+        <div style="padding:0 var(--space-3); border-right:1px solid var(--border);">
+          <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Daily Quiz</div>
+          <div style="font-size:1.2rem; font-weight:800; color:var(--success-light); margin-top:2px;">
+            {{ my_rank.daily_quiz_score|default(0)|int }} / 100 <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">(Rank #{{ my_rank.daily_quiz_rank or '-' }})</span>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Weekly Quiz</div>
+          <div style="font-size:1.2rem; font-weight:800; color:var(--warning-light); margin-top:2px;">
+            {{ my_rank.weekly_quiz_score|default(0)|int }} / 300 <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">(Rank #{{ my_rank.weekly_quiz_rank or '-' }})</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Tabs Navigation -->
+  <div style="display:flex; gap:var(--space-2); margin-bottom:var(--space-5); border-bottom:1px solid var(--border); padding-bottom:var(--space-2); overflow-x:auto;">
+    <button class="btn btn-primary btn-sm tab-btn" id="tabDaily" onclick="switchTab('tabDaily', 'contentDaily')">⚡ Daily MCQ Competition</button>
+    <button class="btn btn-ghost btn-sm tab-btn" id="tabWeekly" onclick="switchTab('tabWeekly', 'contentWeekly')">🏆 Weekly MCQ Championship</button>
+    <button class="btn btn-ghost btn-sm tab-btn" id="tabGlobal" onclick="switchTab('tabGlobal', 'contentGlobal')">🌐 Overall College</button>
+    <button class="btn btn-ghost btn-sm tab-btn" id="tabDept" onclick="switchTab('tabDept', 'contentDept')">🏢 Department</button>
+  </div>
+
+  <!-- TAB 1: DAILY MCQ COMPETITION -->
+  <div id="contentDaily" class="tab-content active">
+    <div class="card">
+      <div class="card-header flex items-center justify-between" style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:0.95rem; font-weight:700;">⚡ Daily MCQ Quiz Standings (Target: 100 Marks)</h3>
+        <span class="badge badge-success" style="font-size:0.75rem;">Resets Daily at 12:00 AM</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <div style="display:flex; font-weight:700; font-size:0.75rem; color:var(--text-muted); padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border); text-transform:uppercase;">
+          <div style="width:60px;">Rank</div>
+          <div style="flex:1;">Student</div>
+          <div style="width:140px;">Department</div>
+          <div style="width:110px; text-align:right;">Marks Scored</div>
+          <div style="width:90px; text-align:right;">Time</div>
+        </div>
+        {% for lb, profile, user in daily_leaderboard %}
+        <div class="leaderboard-item {{ 'me' if user.id == current_user.id else '' }}" style="display:flex; align-items:center; padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border-light);">
+          <div style="width:60px; font-weight:800; font-size:1.1rem;" class="{{ 'top1' if loop.index == 1 else ('top2' if loop.index == 2 else ('top3' if loop.index == 3 else '')) }}">
+            {{ '🥇 1' if loop.index == 1 else ('🥈 2' if loop.index == 2 else ('🥉 3' if loop.index == 3 else '#' ~ loop.index)) }}
+          </div>
+          <div style="flex:1; display:flex; align-items:center; gap:var(--space-3); min-width:0;">
+            <div class="avatar avatar-sm" style="background:var(--grad-primary); color:#fff; font-weight:700; font-size:0.65rem;">
+              {{ (profile.full_name[:2] if profile and profile.full_name else 'ST').upper() }}
+            </div>
+            <div>
+              <div style="font-weight:600; font-size:0.88rem; color:var(--text-heading);">
+                {{ profile.full_name if profile and profile.full_name else user.email.split('@')[0] }}
+                {% if user.id == current_user.id %}<span class="badge badge-primary" style="font-size:0.6rem;">You</span>{% endif %}
+              </div>
+              <div style="font-size:0.7rem; color:var(--text-muted);">{{ profile.college if profile and profile.college else 'College' }}</div>
+            </div>
+          </div>
+          <div style="width:140px; font-size:0.8rem; color:var(--text-secondary);">
+            {{ profile.department if profile and profile.department else 'CS' }}
+          </div>
+          <div style="width:110px; text-align:right; font-weight:800; font-size:1rem; color:var(--success-light);">
+            {{ lb.daily_quiz_score|default(0)|int }} / 100
+          </div>
+          <div style="width:90px; text-align:right; font-size:0.78rem; color:var(--text-muted);">
+            ⏱️ {{ lb.daily_quiz_time|default('5m 00s') }}
+          </div>
+        </div>
+        {% else %}
+          {% for student in default_leaderboard %}
+          <div class="leaderboard-item" style="display:flex; align-items:center; padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border-light);">
+            <div style="width:60px; font-weight:800; font-size:1.1rem;" class="{{ 'top1' if student.rank == 1 else ('top2' if student.rank == 2 else ('top3' if student.rank == 3 else '')) }}">
+              {{ '🥇 1' if student.rank == 1 else ('🥈 2' if student.rank == 2 else ('🥉 3' if student.rank == 3 else '#' ~ student.rank)) }}
+            </div>
+            <div style="flex:1; display:flex; align-items:center; gap:var(--space-3); min-width:0;">
+              <div class="avatar avatar-sm" style="background:var(--grad-primary); color:#fff; font-weight:700; font-size:0.65rem;">
+                {{ student.name[:2].upper() }}
+              </div>
+              <div>
+                <div style="font-weight:600; font-size:0.88rem; color:var(--text-heading);">{{ student.name }}</div>
+                <div style="font-size:0.7rem; color:var(--text-muted);">{{ student.college }}</div>
+              </div>
+            </div>
+            <div style="width:140px; font-size:0.8rem; color:var(--text-secondary);">{{ student.dept }}</div>
+            <div style="width:110px; text-align:right; font-weight:800; font-size:1rem; color:var(--success-light);">
+              {{ student.daily_score }} / 100
+            </div>
+            <div style="width:90px; text-align:right; font-size:0.78rem; color:var(--text-muted);">
+              ⏱️ {{ student.daily_time }}
+            </div>
+          </div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: WEEKLY MCQ CHAMPIONSHIP -->
+  <div id="contentWeekly" class="tab-content" style="display:none;">
+    <div class="card">
+      <div class="card-header flex items-center justify-between" style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:0.95rem; font-weight:700;">🏆 Weekly Placement MCQ Championship (Target: 300 Marks)</h3>
+        <span class="badge badge-warning" style="font-size:0.75rem;">Weekly Grand Prize Pool</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <div style="display:flex; font-weight:700; font-size:0.75rem; color:var(--text-muted); padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border); text-transform:uppercase;">
+          <div style="width:60px;">Rank</div>
+          <div style="flex:1;">Student</div>
+          <div style="width:140px;">Department</div>
+          <div style="width:110px; text-align:right;">Marks Scored</div>
+          <div style="width:90px; text-align:right;">Time</div>
+        </div>
+        {% for lb, profile, user in weekly_leaderboard %}
+        <div class="leaderboard-item {{ 'me' if user.id == current_user.id else '' }}" style="display:flex; align-items:center; padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border-light);">
+          <div style="width:60px; font-weight:800; font-size:1.1rem;" class="{{ 'top1' if loop.index == 1 else ('top2' if loop.index == 2 else ('top3' if loop.index == 3 else '')) }}">
+            {{ '🥇 1' if loop.index == 1 else ('🥈 2' if loop.index == 2 else ('🥉 3' if loop.index == 3 else '#' ~ loop.index)) }}
+          </div>
+          <div style="flex:1; display:flex; align-items:center; gap:var(--space-3); min-width:0;">
+            <div class="avatar avatar-sm" style="background:var(--grad-warning); color:#fff; font-weight:700; font-size:0.65rem;">
+              {{ (profile.full_name[:2] if profile and profile.full_name else 'ST').upper() }}
+            </div>
+            <div>
+              <div style="font-weight:600; font-size:0.88rem; color:var(--text-heading);">
+                {{ profile.full_name if profile and profile.full_name else user.email.split('@')[0] }}
+                {% if user.id == current_user.id %}<span class="badge badge-primary" style="font-size:0.6rem;">You</span>{% endif %}
+              </div>
+              <div style="font-size:0.7rem; color:var(--text-muted);">{{ profile.college if profile and profile.college else 'College' }}</div>
+            </div>
+          </div>
+          <div style="width:140px; font-size:0.8rem; color:var(--text-secondary);">
+            {{ profile.department if profile and profile.department else 'CS' }}
+          </div>
+          <div style="width:110px; text-align:right; font-weight:800; font-size:1rem; color:var(--warning-light);">
+            {{ lb.weekly_quiz_score|default(0)|int }} / 300
+          </div>
+          <div style="width:90px; text-align:right; font-size:0.78rem; color:var(--text-muted);">
+            ⏱️ {{ lb.weekly_quiz_time|default('15m 00s') }}
+          </div>
+        </div>
+        {% else %}
+          {% for student in default_leaderboard %}
+          <div class="leaderboard-item" style="display:flex; align-items:center; padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border-light);">
+            <div style="width:60px; font-weight:800; font-size:1.1rem;" class="{{ 'top1' if student.rank == 1 else ('top2' if student.rank == 2 else ('top3' if student.rank == 3 else '')) }}">
+              {{ '🥇 1' if student.rank == 1 else ('🥈 2' if student.rank == 2 else ('🥉 3' if student.rank == 3 else '#' ~ student.rank)) }}
+            </div>
+            <div style="flex:1; display:flex; align-items:center; gap:var(--space-3); min-width:0;">
+              <div class="avatar avatar-sm" style="background:var(--grad-warning); color:#fff; font-weight:700; font-size:0.65rem;">
+                {{ student.name[:2].upper() }}
+              </div>
+              <div>
+                <div style="font-weight:600; font-size:0.88rem; color:var(--text-heading);">{{ student.name }}</div>
+                <div style="font-size:0.7rem; color:var(--text-muted);">{{ student.college }}</div>
+              </div>
+            </div>
+            <div style="width:140px; font-size:0.8rem; color:var(--text-secondary);">{{ student.dept }}</div>
+            <div style="width:110px; text-align:right; font-weight:800; font-size:1rem; color:var(--warning-light);">
+              {{ student.weekly_score }} / 300
+            </div>
+            <div style="width:90px; text-align:right; font-size:0.78rem; color:var(--text-muted);">
+              ⏱️ {{ student.weekly_time }}
+            </div>
+          </div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: OVERALL COLLEGE LEADERBOARD -->
+  <div id="contentGlobal" class="tab-content" style="display:none;">
+    <div class="card">
+      <div style="overflow-x:auto;">
+        <div style="display:flex; font-weight:700; font-size:0.75rem; color:var(--text-muted); padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border); text-transform:uppercase;">
+          <div style="width:60px;">Rank</div>
+          <div style="flex:1;">Student</div>
+          <div style="width:160px;">College</div>
+          <div style="width:130px;">Department</div>
+          <div style="width:100px; text-align:right;">Readiness Index</div>
+        </div>
+        {% for lb, profile, user in leaderboard %}
+        <div class="leaderboard-item {{ 'me' if user.id == current_user.id else '' }}" style="display:flex; align-items:center; padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border-light);">
+          <div style="width:60px; font-weight:800; font-size:1.1rem;">#{{ loop.index }}</div>
+          <div style="flex:1; display:flex; align-items:center; gap:var(--space-3);">
+            <div class="avatar avatar-sm" style="background:var(--grad-primary); color:#fff; font-weight:700; font-size:0.65rem;">
+              {{ (profile.full_name[:2] if profile and profile.full_name else 'ST').upper() }}
+            </div>
+            <div style="font-weight:600; font-size:0.88rem; color:var(--text-heading);">
+              {{ profile.full_name if profile and profile.full_name else user.email.split('@')[0] }}
+              {% if user.id == current_user.id %}<span class="badge badge-primary" style="font-size:0.6rem;">You</span>{% endif %}
+            </div>
+          </div>
+          <div style="width:160px; font-size:0.8rem; color:var(--text-muted);">{{ profile.college if profile and profile.college else '-' }}</div>
+          <div style="width:130px; font-size:0.8rem; color:var(--text-secondary);">{{ profile.department if profile and profile.department else '-' }}</div>
+          <div style="width:100px; text-align:right; font-weight:800; font-size:1rem; color:var(--primary-light);">{{ lb.score|int }} pts</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: DEPARTMENT LEADERBOARD -->
+  <div id="contentDept" class="tab-content" style="display:none;">
+    <div class="card">
+      <div style="overflow-x:auto;">
+        {% for lb, profile, user in dept_leaderboard %}
+        <div class="leaderboard-item {{ 'me' if user.id == current_user.id else '' }}" style="display:flex; align-items:center; padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border-light);">
+          <div style="width:60px; font-weight:800;">#{{ loop.index }}</div>
+          <div style="flex:1; display:flex; align-items:center; gap:var(--space-3);">
+            <div class="avatar avatar-sm" style="background:var(--grad-success); color:#fff; font-weight:700; font-size:0.65rem;">
+              {{ (profile.full_name[:2] if profile and profile.full_name else 'ST').upper() }}
+            </div>
+            <div style="font-weight:600; font-size:0.88rem;">
+              {{ profile.full_name if profile and profile.full_name else user.email.split('@')[0] }}
+              {% if user.id == current_user.id %}<span class="badge badge-primary" style="font-size:0.6rem;">You</span>{% endif %}
+            </div>
+          </div>
+          <div style="width:140px; font-size:0.8rem; color:var(--text-muted);">{{ profile.department if profile and profile.department else '-' }}</div>
+          <div style="width:100px; text-align:right; font-weight:800; font-size:1rem; color:var(--success-light);">{{ lb.score|int }} pts</div>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:var(--space-8);">No department entries yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive Quiz Modal -->
+<div id="quizModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); z-index:9999; justify-content:center; align-items:center; padding:1rem;">
+  <div class="card" style="max-width:700px; width:100%; max-height:85vh; display:flex; flex-direction:column; border:1px solid var(--primary); box-shadow:0 20px 40px rgba(0,0,0,0.6); overflow:hidden;">
+    <div class="card-header flex items-center justify-between" style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0; padding:1rem 1.2rem; border-bottom:1px solid var(--border);">
+      <h3 id="quizModalTitle" style="font-size:1.1rem; font-weight:700;">📝 MCQ Competition Quiz</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeQuizModal()">✕</button>
+    </div>
+    <div class="card-body" id="quizContainer" style="overflow-y:auto; flex:1; max-height:calc(85vh - 65px); padding:1.2rem;">
+      <!-- Quiz questions rendered dynamically by JS -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+function switchTab(tabId, contentId) {
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-ghost'); });
+  document.getElementById(contentId).style.display = 'block';
+  document.getElementById(tabId).classList.remove('btn-ghost');
+  document.getElementById(tabId).classList.add('btn-primary');
+}
+
+const quizQuestions = [
+  {
+    q: "What is the time complexity of searching an element in a balanced Binary Search Tree (BST)?",
+    options: ["O(1)", "O(N)", "O(log N)", "O(N log N)"],
+    answer: 2
+  },
+  {
+    q: "Which CPU Scheduling algorithm is non-preemptive and selects the process with the shortest execution time?",
+    options: ["Round Robin", "Shortest Job First (SJF)", "Priority Scheduling", "FCFS"],
+    answer: 1
+  },
+  {
+    q: "In Relational Databases, which Normal Form eliminates transitive functional dependencies?",
+    options: ["1NF", "2NF", "3NF", "BCNF"],
+    answer: 2
+  },
+  {
+    q: "Which HTTP status code signifies that a requested resource is Not Found?",
+    options: ["200 OK", "401 Unauthorized", "403 Forbidden", "404 Not Found"],
+    answer: 3
+  },
+  {
+    q: "A train 180m long passes a pole in 9 seconds. What is the speed of the train in km/hr?",
+    options: ["36 km/hr", "54 km/hr", "72 km/hr", "90 km/hr"],
+    answer: 2
+  }
+];
+
+let activeQuizType = 'daily';
+let userAnswers = {};
+
+function startQuiz(type) {
+  activeQuizType = type;
+  userAnswers = {};
+  const modal = document.getElementById('quizModal');
+  const title = document.getElementById('quizModalTitle');
+  const container = document.getElementById('quizContainer');
+
+  title.textContent = type === 'daily' ? '⚡ Daily Placement MCQ Competition (100 Marks)' : '🏆 Weekly Grand Placement MCQ Championship (300 Marks)';
+
+  let html = `<div style="display:flex; flex-direction:column; gap:1.2rem;">`;
+  quizQuestions.forEach((q, idx) => {
+    html += `
+      <div style="background:var(--bg-glass-light); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border);">
+        <div style="font-weight:700; margin-bottom:0.6rem; color:var(--text-heading);">Q${idx + 1}. ${q.q}</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+          ${q.options.map((opt, optIdx) => `
+            <label style="display:flex; align-items:center; gap:0.5rem; background:var(--bg-glass); padding:0.5rem 0.8rem; border-radius:var(--radius-sm); border:1px solid var(--border); cursor:pointer; font-size:0.85rem;">
+              <input type="radio" name="q_${idx}" value="${optIdx}" onchange="userAnswers[${idx}] = ${optIdx}">
+              <span>${opt}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  });
+
+  html += `
+    <button class="btn btn-primary btn-block btn-shimmer" onclick="submitQuizAnswers()" style="margin-top:1rem;">
+      🚀 Submit Answers & Calculate Rank
+    </button>
+  </div>`;
+
+  container.innerHTML = html;
+  modal.style.display = 'flex';
+}
+
+function closeQuizModal() {
+  document.getElementById('quizModal').style.display = 'none';
+}
+
+async function submitQuizAnswers() {
+  let correct = 0;
+  quizQuestions.forEach((q, idx) => {
+    if (userAnswers[idx] === q.answer) correct++;
+  });
+
+  const percentage = (correct / quizQuestions.length) * 100;
+  const timeTaken = `${Math.floor(Math.random() * 2) + 3}m ${Math.floor(Math.random() * 50) + 10}s`;
+  const container = document.getElementById('quizContainer');
+
+  try {
+    const res = await fetch('/student/submit-quiz', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        quiz_type: activeQuizType,
+        score: percentage,
+        time_taken: timeTaken
+      })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      let certHtml = '';
+      if (data.cert_id) {
+        certHtml = `
+          <div style="margin-top:1.2rem; padding:1.2rem; background:linear-gradient(135deg, rgba(245,158,11,0.15), rgba(99,102,241,0.15)); border:1px double #f59e0b; border-radius:var(--radius-md); text-align:center;">
+            <div style="font-size:2.5rem;">🎓</div>
+            <div style="font-weight:800; font-size:1.1rem; color:var(--text-heading); margin-top:0.3rem;">Certificate of Excellence Awarded!</div>
+            <p style="font-size:0.82rem; color:var(--text-secondary); margin:0.4rem 0 1rem 0;">You have earned an official CareerLens-AI Certificate for your high score.</p>
+            <a href="/student/view-certificate/${data.cert_id}" target="_blank" class="btn btn-primary btn-sm btn-shimmer" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem;">
+              📜 View & Download Certificate
+            </a>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div style="text-align:center; padding:1.5rem;">
+          <div style="font-size:3.5rem;">🎉</div>
+          <h2 style="font-size:1.4rem; font-weight:800; color:var(--text-heading); margin-top:0.5rem;">Quiz Completed Successfully!</h2>
+          
+          <div style="display:flex; justify-content:center; gap:1.5rem; margin:1.2rem 0;">
+            <div style="background:var(--bg-glass-light); padding:1rem 1.5rem; border-radius:var(--radius-md); border:1px solid var(--border);">
+              <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">ACCURACY SCORE</div>
+              <div style="font-size:1.6rem; font-weight:900; color:var(--success-light);">${percentage}%</div>
+            </div>
+            <div style="background:var(--bg-glass-light); padding:1rem 1.5rem; border-radius:var(--radius-md); border:1px solid var(--border);">
+              <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">DAILY RANK</div>
+              <div style="font-size:1.6rem; font-weight:900; color:var(--primary-light);">#${data.daily_rank}</div>
+            </div>
+          </div>
+
+          ${certHtml}
+
+          <button onclick="window.location.reload()" class="btn btn-secondary btn-block" style="margin-top:1.5rem;">
+            🔄 Refresh Leaderboard Standings
+          </button>
+        </div>
+      `;
+    }
+  } catch (err) {
+    alert('Error submitting quiz answers.');
+  }
+}
+</script>
+{% endblock %}

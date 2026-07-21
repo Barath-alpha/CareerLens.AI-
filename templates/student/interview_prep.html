@@ -1,0 +1,190 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Interview Prep{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header">
+    <h1 class="page-title">🎤 Interview Preparation</h1>
+    <p class="page-subtitle">AI-generated interview questions tailored to your target companies and skills.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-6);">
+
+    <!-- Generator -->
+    <div class="card">
+      <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">⚙️ Generate Questions</h3></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Question Type</label>
+          <select id="qType" class="form-select">
+            <option value="technical">💻 Technical / DSA</option>
+            <option value="hr">🤝 HR / Behavioral</option>
+            <option value="system_design">🏗️ System Design</option>
+            <option value="aptitude">📐 Aptitude</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company (Optional)</label>
+          <input type="text" id="companyName" class="form-control" placeholder="e.g., Google, TCS, Infosys">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Difficulty</label>
+          <div style="display:flex; gap:var(--space-2);">
+            {% for level in ['Easy', 'Medium', 'Hard'] %}
+            <label style="flex:1; cursor:pointer;">
+              <input type="radio" name="difficulty" value="{{ level.lower() }}" {{ 'checked' if level == 'Medium' }} style="display:none;" id="diff{{ level }}">
+              <div class="btn btn-secondary btn-sm diff-btn" style="width:100%; text-align:center;" onclick="selectDiff(this, '{{ level.lower() }}')">
+                {{ '🟢' if level == 'Easy' else ('🟡' if level == 'Medium' else '🔴') }} {{ level }}
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Number of Questions</label>
+          <select id="numQuestions" class="form-select">
+            <option value="5">5 questions</option>
+            <option value="10" selected>10 questions</option>
+            <option value="15">15 questions</option>
+            <option value="20">20 questions</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-block btn-shimmer" onclick="generateQuestions()">
+          <i data-lucide="brain" style="width:16px;height:16px;"></i>
+          Generate Questions
+        </button>
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+      <div class="card">
+        <div class="card-header"><h3 style="font-size:0.9rem; font-weight:700;">💡 Interview Tips</h3></div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:var(--space-3);">
+          {% for tip in [
+            ('🎯', 'Research the company', 'Know their products, mission, and recent news before the interview.'),
+            ('⏱️', 'Practice STAR method', 'Situation, Task, Action, Result – for behavioral questions.'),
+            ('💻', 'Code out loud', 'Explain your thought process while solving coding problems.'),
+            ('❓', 'Ask questions', 'Always prepare 2-3 questions to ask the interviewer.'),
+            ('🔄', 'Follow up', 'Send a thank-you email within 24 hours of the interview.'),
+          ] %}
+          <div style="display:flex; gap:var(--space-3); padding:var(--space-3); background:var(--bg-glass-light); border-radius:var(--radius-md); border:1px solid var(--border);">
+            <span style="font-size:1.1rem; flex-shrink:0;">{{ tip[0] }}</span>
+            <div>
+              <div style="font-size:0.82rem; font-weight:600; color:var(--text-heading);">{{ tip[1] }}</div>
+              <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ tip[2] }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generated Questions -->
+  <div id="questionsPanel" style="display:none; margin-top:var(--space-5);">
+    <div class="card">
+      <div class="card-header flex items-center justify-between">
+        <h3 id="questionsTitle" style="font-size:1rem; font-weight:700;">📋 Interview Questions</h3>
+        <div style="display:flex; gap:var(--space-2);">
+          <button class="btn btn-ghost btn-sm" onclick="generateQuestions()">🔄 Regenerate</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadQuestions()">⬇️ Download</button>
+        </div>
+      </div>
+      <div class="card-body" id="questionsList"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+let selectedDiff = 'medium';
+
+function selectDiff(btn, level) {
+  selectedDiff = level;
+  document.querySelectorAll('.diff-btn').forEach(b => {
+    b.style.background = '';
+    b.style.color = '';
+  });
+  if (btn) {
+    btn.style.background = 'var(--primary)';
+    btn.style.color = '#fff';
+  }
+}
+
+async function generateQuestions() {
+  const panel = document.getElementById('questionsPanel');
+  const list = document.getElementById('questionsList');
+  const title = document.getElementById('questionsTitle');
+
+  const qType = document.getElementById('qType').value;
+  const company = document.getElementById('companyName').value;
+  const num = parseInt(document.getElementById('numQuestions').value);
+
+  list.innerHTML = `<div style="text-align:center; padding:2rem;">
+    <div class="animate-spin" style="font-size:2rem; display:inline-block;">⚙️</div>
+    <div style="margin-top:1rem; color:var(--text-muted);">Generating questions with AI...</div>
+  </div>`;
+  panel.style.display = 'block';
+
+  try {
+    const res = await fetch('/ai/interview-questions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ type: qType, company, difficulty: selectedDiff, count: num }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      title.textContent = `📋 ${data.type} Interview Questions${company ? ` – ${company}` : ''}`;
+      list.innerHTML = data.questions.map((q, i) => `
+        <div class="question-card" style="margin-bottom:1rem; cursor:pointer;" onclick="toggleAnswer(${i})">
+          <div style="display:flex; align-items:flex-start; gap:1rem;">
+            <span class="badge badge-${data.difficulty === 'easy' ? 'success' : data.difficulty === 'hard' ? 'danger' : 'warning'}"
+              style="font-size:0.65rem; flex-shrink:0; margin-top:2px;">${data.difficulty?.toUpperCase()}</span>
+            <div style="flex:1;">
+              <div class="question-text">Q${i+1}. ${q.question}</div>
+              <div id="ans_${i}" style="display:none; margin-top:1rem; padding:1rem; background:var(--bg-glass-light); border-radius:var(--radius-md); border-left:3px solid var(--primary); font-size:0.85rem; color:var(--text-secondary); line-height:1.7;">
+                💡 ${q.hint || q.answer || 'Think about the core concepts and explain step by step.'}
+              </div>
+            </div>
+            <span style="color:var(--text-muted); font-size:0.8rem; flex-shrink:0;" id="toggleIcon_${i}">Hint ▼</span>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-title">${data.error || 'Failed to generate questions'}</div></div>`;
+    }
+  } catch (e) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">Network error</div></div>';
+  }
+}
+
+function toggleAnswer(idx) {
+  const ans = document.getElementById(`ans_${idx}`);
+  const icon = document.getElementById(`toggleIcon_${idx}`);
+  if (ans.style.display === 'none') {
+    ans.style.display = 'block';
+    if (icon) icon.textContent = 'Hide ▲';
+  } else {
+    ans.style.display = 'none';
+    if (icon) icon.textContent = 'Hint ▼';
+  }
+}
+
+function downloadQuestions() {
+  const text = Array.from(document.querySelectorAll('.question-text'))
+    .map((el, i) => `Q${i+1}. ${el.textContent}`).join('\n\n');
+  const blob = new Blob([text], {type: 'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'interview_questions.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

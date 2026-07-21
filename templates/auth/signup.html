@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}Sign Up – Create Your Account{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+  <div class="auth-panel" style="align-items:flex-start; padding-top:var(--space-8); padding-bottom:var(--space-8); overflow-y:auto;">
+    <div class="auth-card" style="max-width:520px; margin:auto;">
+      <a href="{{ url_for('index') }}" class="auth-logo">
+        <div class="logo-icon">🎯</div>
+        CareerLens-AI
+      </a>
+
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-subtitle">Start your AI-powered placement journey for free. No credit card required.</p>
+
+      <!-- Step indicators -->
+      <div class="steps-indicator">
+        <div class="step-dot active" id="stepDot1"></div>
+        <div class="step-dot" id="stepDot2"></div>
+        <div class="step-dot" id="stepDot3"></div>
+      </div>
+
+      <!-- Flash Messages -->
+      <div id="flashMessages" class="flash-messages"></div>
+
+      <form class="auth-form" id="signupForm" novalidate>
+        <!-- Step 1: Personal Info -->
+        <div id="step1">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="full_name">Full Name *</label>
+              <div class="input-group">
+                <i data-lucide="user" class="input-icon" style="width:15px;height:15px;"></i>
+                <input type="text" id="full_name" name="full_name" class="form-control"
+                  placeholder="Priya Sharma" required>
+              </div>
+              <div class="form-error" id="nameError"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="phone">Phone Number</label>
+              <div class="input-group">
+                <i data-lucide="phone" class="input-icon" style="width:15px;height:15px;"></i>
+                <input type="tel" id="phone" name="phone" class="form-control"
+                  placeholder="+91-9876543210">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Email Address *</label>
+            <div class="input-group">
+              <i data-lucide="mail" class="input-icon" style="width:15px;height:15px;"></i>
+              <input type="email" id="email" name="email" class="form-control"
+                placeholder="you@example.com" autocomplete="email" required>
+            </div>
+            <div class="form-error" id="emailError"></div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="college">College/University</label>
+              <div class="input-group">
+                <i data-lucide="building-2" class="input-icon" style="width:15px;height:15px;"></i>
+                <input type="text" id="college" name="college" class="form-control" placeholder="IIT Bombay">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="department">Department</label>
+              <select id="department" name="department" class="form-select">
+                <option value="">Select Dept</option>
+                <option>Computer Science</option>
+                <option>Information Technology</option>
+                <option>Electronics & Communication</option>
+                <option>Electrical Engineering</option>
+                <option>Mechanical Engineering</option>
+                <option>Civil Engineering</option>
+                <option>Chemical Engineering</option>
+                <option>Data Science</option>
+                <option>MBA</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="year">Current Year of Study</label>
+            <select id="year" name="year" class="form-select">
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3" selected>3rd Year</option>
+              <option value="4">4th Year</option>
+              <option value="5">5th Year (5-year program)</option>
+            </select>
+          </div>
+
+          <button type="button" class="btn btn-primary btn-block btn-lg" onclick="nextStep(2)">
+            Continue →
+          </button>
+        </div>
+
+        <!-- Step 2: Password -->
+        <div id="step2" style="display:none;">
+          <div class="form-group">
+            <label class="form-label" for="password">Password *</label>
+            <div class="password-wrapper">
+              <input type="password" id="password" name="password" class="form-control"
+                placeholder="Min 8 chars, uppercase, number" required oninput="checkPasswordStrength(this.value)">
+              <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                <i data-lucide="eye" style="width:16px;height:16px;"></i>
+              </button>
+            </div>
+            <div class="password-strength">
+              <div class="strength-bars">
+                <div class="strength-bar" id="sBar1"></div>
+                <div class="strength-bar" id="sBar2"></div>
+                <div class="strength-bar" id="sBar3"></div>
+                <div class="strength-bar" id="sBar4"></div>
+              </div>
+              <span class="strength-label" id="strengthLabel">Enter a password</span>
+            </div>
+            <div class="form-error" id="passwordError"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="confirm_password">Confirm Password *</label>
+            <div class="password-wrapper">
+              <input type="password" id="confirm_password" name="confirm_password" class="form-control"
+                placeholder="Repeat your password" required>
+              <button type="button" class="password-toggle" onclick="togglePassword('confirm_password', this)">
+                <i data-lucide="eye" style="width:16px;height:16px;"></i>
+              </button>
+            </div>
+            <div class="form-error" id="confirmError"></div>
+          </div>
+
+          <div style="display:flex; gap:var(--space-3);">
+            <button type="button" class="btn btn-secondary btn-lg" style="flex:1;" onclick="nextStep(1)">← Back</button>
+            <button type="button" class="btn btn-primary btn-lg" style="flex:2;" onclick="nextStep(3)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Terms & Submit -->
+        <div id="step3" style="display:none;">
+          <div style="background:var(--bg-glass-light); border:1px solid var(--border); border-radius:var(--radius-lg); padding:var(--space-5); margin-bottom:var(--space-5);">
+            <h4 style="font-size:0.9rem; margin-bottom:var(--space-3); color:var(--text-heading);">📋 Review Your Details</h4>
+            <div style="font-size:0.82rem; color:var(--text-secondary); display:grid; grid-template-columns:1fr 1fr; gap:var(--space-2);">
+              <div><span style="color:var(--text-muted);">Name:</span> <span id="reviewName">-</span></div>
+              <div><span style="color:var(--text-muted);">Email:</span> <span id="reviewEmail">-</span></div>
+              <div><span style="color:var(--text-muted);">College:</span> <span id="reviewCollege">-</span></div>
+              <div><span style="color:var(--text-muted);">Dept:</span> <span id="reviewDept">-</span></div>
+            </div>
+          </div>
+
+          <label class="checkbox-wrapper" style="margin-bottom:var(--space-4); align-items:flex-start; gap:var(--space-3);">
+            <input type="checkbox" id="terms" required style="margin-top:3px;">
+            <span class="checkbox-label">I agree to the <a href="#" style="color:var(--primary-light);">Terms of Service</a> and <a href="#" style="color:var(--primary-light);">Privacy Policy</a></span>
+          </label>
+
+          <div style="display:flex; gap:var(--space-3);">
+            <button type="button" class="btn btn-secondary btn-lg" style="flex:1;" onclick="nextStep(2)">← Back</button>
+            <button type="submit" class="btn btn-primary btn-lg btn-shimmer" style="flex:2;" id="submitBtn">
+              <span id="submitText">🚀 Create Account</span>
+              <span id="submitLoading" style="display:none;">
+                <i data-lucide="loader-2" style="width:16px;height:16px;" class="animate-spin"></i>
+                Creating...
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div class="divider-text">or</div>
+        <a href="#" class="btn-google" onclick="showToast('Google OAuth requires configuration', 'info'); return false;">
+          <span class="google-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+          </span>
+          Sign up with Google
+        </a>
+      </form>
+
+      <div class="auth-switch">
+        Already have an account? <a href="{{ url_for('auth.login') }}">Sign in →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Illustration -->
+  <div class="auth-illustration">
+    <div style="font-size:4rem; margin-bottom:var(--space-4); animation:float 4s ease-in-out infinite; animation-delay:-2s;">🚀</div>
+    <h2 class="auth-illustration-title">Start Your Placement<br>Journey Today</h2>
+    <p class="auth-illustration-desc">
+      Join 50,000+ students already using CareerLens-AI. Get your AI placement score in under 5 minutes!
+    </p>
+
+    <div class="auth-stats-cards">
+      <div class="auth-stat-card">
+        <div class="auth-stat-icon" style="background:rgba(99,102,241,0.15); color:var(--primary-light);">⚡</div>
+        <div>
+          <div class="auth-stat-value">2 Minutes</div>
+          <div class="auth-stat-label">Setup & First Prediction</div>
+        </div>
+      </div>
+      <div class="auth-stat-card">
+        <div class="auth-stat-icon" style="background:rgba(16,185,129,0.15); color:var(--accent-green);">🎯</div>
+        <div>
+          <div class="auth-stat-value">22 Parameters</div>
+          <div class="auth-stat-label">Used for prediction</div>
+        </div>
+      </div>
+      <div class="auth-stat-card">
+        <div class="auth-stat-icon" style="background:rgba(245,158,11,0.15); color:var(--accent-orange);">🏆</div>
+        <div>
+          <div class="auth-stat-value">Free Forever</div>
+          <div class="auth-stat-label">No credit card needed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+<script>
+let currentStep = 1;
+
+function nextStep(step) {
+  if (step > currentStep && !validateStep(currentStep)) return;
+
+  // Update review on step 3
+  if (step === 3) {
+    document.getElementById('reviewName').textContent = document.getElementById('full_name').value || '-';
+    document.getElementById('reviewEmail').textContent = document.getElementById('email').value || '-';
+    document.getElementById('reviewCollege').textContent = document.getElementById('college').value || '-';
+    document.getElementById('reviewDept').textContent = document.getElementById('department').value || '-';
+  }
+
+  document.getElementById(`step${currentStep}`).style.display = 'none';
+  document.getElementById(`step${step}`).style.display = 'block';
+
+  ['stepDot1','stepDot2','stepDot3'].forEach((id, idx) => {
+    document.getElementById(id).classList.toggle('active', idx + 1 <= step);
+  });
+
+  currentStep = step;
+  lucide.createIcons();
+}
+
+function validateStep(step) {
+  if (step === 1) {
+    const name = document.getElementById('full_name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    if (!name) {
+      document.getElementById('nameError').textContent = 'Full name is required.';
+      return false;
+    }
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      document.getElementById('emailError').textContent = 'Valid email is required.';
+      return false;
+    }
+    document.getElementById('nameError').textContent = '';
+    document.getElementById('emailError').textContent = '';
+  }
+
+  if (step === 2) {
+    const pw = document.getElementById('password').value;
+    const cpw = document.getElementById('confirm_password').value;
+    if (pw.length < 8) {
+      document.getElementById('passwordError').textContent = 'Password must be at least 8 characters.';
+      return false;
+    }
+    if (pw !== cpw) {
+      document.getElementById('confirmError').textContent = 'Passwords do not match.';
+      return false;
+    }
+    document.getElementById('passwordError').textContent = '';
+    document.getElementById('confirmError').textContent = '';
+  }
+
+  return true;
+}
+
+document.getElementById('signupForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!document.getElementById('terms').checked) {
+    showToast('Please accept Terms of Service to continue.', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  document.getElementById('submitText').style.display = 'none';
+  document.getElementById('submitLoading').style.display = 'flex';
+  btn.disabled = true;
+
+  const data = {
+    full_name: document.getElementById('full_name').value,
+    email: document.getElementById('email').value,
+    phone: document.getElementById('phone').value,
+    college: document.getElementById('college').value,
+    department: document.getElementById('department').value,
+    year: document.getElementById('year').value,
+    password: document.getElementById('password').value,
+    confirm_password: document.getElementById('confirm_password').value,
+  };
+
+  try {
+    const res = await fetch('{{ url_for("auth.signup") }}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data),
+    });
+    const result = await res.json();
+
+    if (result.success) {
+      showToast('Account created! Redirecting to login...', 'success');
+      setTimeout(() => window.location.href = result.redirect, 1200);
+    } else {
+      const errors = result.errors || {};
+      Object.entries(errors).forEach(([field, msg]) => {
+        const el = document.getElementById(field + 'Error');
+        if (el) el.textContent = msg;
+      });
+      showToast(result.message || 'Please fix the errors.', 'danger');
+      btn.disabled = false;
+      document.getElementById('submitText').style.display = 'inline';
+      document.getElementById('submitLoading').style.display = 'none';
+    }
+  } catch (err) {
+    showToast('Network error. Please try again.', 'danger');
+    btn.disabled = false;
+    document.getElementById('submitText').style.display = 'inline';
+    document.getElementById('submitLoading').style.display = 'none';
+  }
+});
+
+lucide.createIcons();
+</script>
+{% endblock %}

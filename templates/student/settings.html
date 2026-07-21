@@ -1,0 +1,231 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header">
+    <h1 class="page-title">⚙️ Settings</h1>
+    <p class="page-subtitle">Manage your account, preferences, and notifications.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:200px 1fr; gap:var(--space-6);">
+
+    <!-- Settings Nav -->
+    <nav style="display:flex; flex-direction:column; gap:var(--space-2);">
+      {% for id, label, icon in [
+        ('account', 'Account', 'user'),
+        ('preferences', 'Preferences', 'settings'),
+        ('notifications', 'Notifications', 'bell'),
+        ('security', 'Security', 'shield'),
+        ('danger', 'Danger Zone', 'alert-triangle'),
+      ] %}
+      <button class="btn {{ 'btn-primary' if loop.first else 'btn-ghost' }} btn-sm settings-nav-btn"
+        style="justify-content:flex-start; gap:var(--space-3);"
+        id="navBtn_{{ id }}"
+        onclick="showSection('{{ id }}')">
+        <i data-lucide="{{ icon }}" style="width:14px;height:14px;"></i>{{ label }}
+      </button>
+      {% endfor %}
+    </nav>
+
+    <div>
+      <!-- Account Section -->
+      <div id="section_account" class="card settings-section">
+        <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">👤 Account Settings</h3></div>
+        <div class="card-body">
+          <form id="accountForm">
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-control" value="{{ current_user.email }}" readonly style="opacity:0.6;" title="Contact support to change email">
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Email cannot be changed. Contact support if needed.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" name="full_name" id="settingName" class="form-control" value="{{ current_user.profile.full_name if current_user.profile else '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <input type="text" class="form-control" value="{{ current_user.role|capitalize }}" readonly style="opacity:0.6;">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="saveAccount()">Save Changes</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Preferences Section -->
+      <div id="section_preferences" class="card settings-section" style="display:none;">
+        <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">🎨 Preferences</h3></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Theme</label>
+            <div style="display:flex; gap:var(--space-3);">
+              <button class="btn btn-secondary btn-sm" onclick="setTheme('dark')" id="darkThemeBtn">🌙 Dark</button>
+              <button class="btn btn-secondary btn-sm" onclick="setTheme('light')" id="lightThemeBtn">☀️ Light</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Career Goal</label>
+            <select class="form-select" id="careerGoal">
+              {% for goal in ['Software Engineer', 'Data Scientist', 'Product Manager', 'DevOps Engineer', 'Machine Learning Engineer', 'Full Stack Developer', 'Backend Developer', 'Frontend Developer', 'Other'] %}
+              <option {{ 'selected' if current_user.profile and current_user.profile.career_goal == goal }}>{{ goal }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="savePreferences()">Save Preferences</button>
+        </div>
+      </div>
+
+      <!-- Notifications Section -->
+      <div id="section_notifications" class="card settings-section" style="display:none;">
+        <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">🔔 Notification Settings</h3></div>
+        <div class="card-body">
+          {% for label, key in [
+            ('Email notifications', 'email_notifs'),
+            ('Prediction alerts', 'pred_alerts'),
+            ('Weekly placement report', 'weekly_report'),
+            ('Company alerts', 'company_alerts'),
+          ] %}
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-4); padding:var(--space-3) 0; border-bottom:1px solid var(--border);">
+            <span style="font-size:0.875rem; font-weight:500; color:var(--text-secondary);">{{ label }}</span>
+            <label style="position:relative; display:inline-block; width:44px; height:24px; cursor:pointer;">
+              <input type="checkbox" checked style="opacity:0; width:0; height:0;" id="notifToggle_{{ key }}">
+              <span onclick="this.parentElement.querySelector('input').click(); this.style.background=this.parentElement.querySelector('input').checked?'var(--primary)':'var(--border)'"
+                style="position:absolute; inset:0; border-radius:34px; background:var(--primary); transition:0.3s; border:1px solid var(--border);">
+                <span style="position:absolute; left:2px; bottom:2px; width:18px; height:18px; border-radius:50%; background:#fff; transition:0.3s;"></span>
+              </span>
+            </label>
+          </div>
+          {% endfor %}
+          <button class="btn btn-primary" onclick="showToast('Notification settings saved', 'success')">Save Settings</button>
+        </div>
+      </div>
+
+      <!-- Security Section -->
+      <div id="section_security" class="card settings-section" style="display:none;">
+        <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">🔐 Security</h3></div>
+        <div class="card-body">
+          <form id="passwordForm">
+            <div class="form-group">
+              <label class="form-label">Current Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="currentPwd" class="form-control" placeholder="Enter current password">
+                <button type="button" class="password-toggle" onclick="togglePassword('currentPwd', this)">
+                  <i data-lucide="eye" style="width:16px;height:16px;"></i>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="newPwd" class="form-control" placeholder="New password"
+                  oninput="checkPasswordStrength(this.value)">
+                <button type="button" class="password-toggle" onclick="togglePassword('newPwd', this)">
+                  <i data-lucide="eye" style="width:16px;height:16px;"></i>
+                </button>
+              </div>
+              <div class="password-strength">
+                <div class="strength-bars">
+                  <div class="strength-bar" id="sBar1"></div>
+                  <div class="strength-bar" id="sBar2"></div>
+                  <div class="strength-bar" id="sBar3"></div>
+                  <div class="strength-bar" id="sBar4"></div>
+                </div>
+                <span class="strength-label" id="strengthLabel">Enter a password</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm New Password</label>
+              <input type="password" id="confirmPwd" class="form-control" placeholder="Repeat new password">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="changePassword()">Change Password</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div id="section_danger" class="card settings-section" style="display:none; border:1px solid rgba(239,68,68,0.3);">
+        <div class="card-header"><h3 style="font-size:1rem; font-weight:700; color:var(--accent-red);">⚠️ Danger Zone</h3></div>
+        <div class="card-body">
+          <div style="padding:var(--space-5); background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-lg); margin-bottom:var(--space-4);">
+            <div style="font-weight:700; margin-bottom:var(--space-2); color:var(--text-heading);">Delete Account</div>
+            <p style="font-size:0.875rem; color:var(--text-secondary); margin-bottom:var(--space-4);">This action is permanent and cannot be undone. All your data, predictions, and progress will be deleted.</p>
+            <button class="btn btn-sm" style="background:var(--accent-red); color:#fff; border:none;"
+              onclick="confirmDeleteAccount()">
+              🗑️ Delete My Account
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+function showSection(id) {
+  document.querySelectorAll('.settings-section').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.settings-nav-btn').forEach(b => {
+    b.classList.remove('btn-primary');
+    b.classList.add('btn-ghost');
+  });
+  document.getElementById(`section_${id}`).style.display = 'block';
+  const navBtn = document.getElementById(`navBtn_${id}`);
+  navBtn.classList.remove('btn-ghost');
+  navBtn.classList.add('btn-primary');
+}
+
+async function saveAccount() {
+  const name = document.getElementById('settingName').value;
+  const res = await fetch('/student/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'update_profile', full_name: name}),
+  });
+  const data = await res.json();
+  if (data.success) showToast('Account updated!', 'success');
+}
+
+async function savePreferences() {
+  const res = await fetch('/student/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'update_preferences', career_goal: document.getElementById('careerGoal').value}),
+  });
+  showToast('Preferences saved!', 'success');
+}
+
+async function changePassword() {
+  const current = document.getElementById('currentPwd').value;
+  const newPwd = document.getElementById('newPwd').value;
+  const confirm = document.getElementById('confirmPwd').value;
+
+  if (!current || !newPwd) { showToast('All fields required', 'warning'); return; }
+  if (newPwd !== confirm) { showToast('Passwords do not match', 'warning'); return; }
+  if (newPwd.length < 8) { showToast('Password must be at least 8 characters', 'warning'); return; }
+
+  const res = await fetch('/student/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'change_password', current_password: current, new_password: newPwd}),
+  });
+  const data = await res.json();
+  showToast(data.message, data.success ? 'success' : 'danger');
+}
+
+function confirmDeleteAccount() {
+  const input = prompt('Type "DELETE" to confirm account deletion:');
+  if (input === 'DELETE') {
+    fetch('/student/settings', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'delete_account'}),
+    }).then(res => res.json()).then(data => {
+      if (data.success) window.location.href = '/';
+    });
+  }
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

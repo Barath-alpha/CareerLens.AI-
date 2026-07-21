@@ -1,0 +1,16 @@
+{
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "**/__pyrefly_virtual__",
+    "**/__pycache__"
+  ],
+  "reportMissingImports": false,
+  "reportUndefinedVariable": false,
+  "executionEnvironments": [
+    {
+      "root": "."
+    }
+  ]
+}

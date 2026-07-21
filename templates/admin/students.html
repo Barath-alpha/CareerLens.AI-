@@ -1,0 +1,141 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Manage Students{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">👥 Manage Students</h1>
+      <p class="page-subtitle">View, filter, and manage student accounts across departments.</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-sm">← Back to Admin</a>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="card" style="margin-bottom:var(--space-5);">
+    <div class="card-body">
+      <form method="GET" action="{{ url_for('admin.students') }}" style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
+        <div class="input-group" style="flex:1; min-width:240px;">
+          <i data-lucide="search" class="input-icon" style="width:14px;height:14px;"></i>
+          <input type="text" name="q" class="form-control" placeholder="Search by name, email, or college..." value="{{ search }}">
+        </div>
+        <select name="dept" class="form-select" style="width:200px;" onchange="this.form.submit()">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d }}" {{ 'selected' if dept == d }}>{{ d }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Filter</button>
+        {% if search or dept %}
+        <a href="{{ url_for('admin.students') }}" class="btn btn-ghost">Reset</a>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <!-- Students Table -->
+  <div class="card">
+    <div class="table-container" style="border:none; border-radius:var(--radius-lg);">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>College</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user, profile in students.items %}
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:var(--space-3);">
+                <div class="avatar avatar-sm" style="background:var(--grad-primary); color:#fff; font-weight:700; font-size:0.65rem;">
+                  {{ (profile.full_name[:2] if profile and profile.full_name else 'ST').upper() }}
+                </div>
+                <div>
+                  <div style="font-weight:600; font-size:0.88rem;">{{ profile.full_name if profile and profile.full_name else user.email.split('@')[0] }}</div>
+                  <div style="font-size:0.72rem; color:var(--text-muted);">{{ user.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td style="font-size:0.85rem;">{{ profile.college or '—' if profile else '—' }}</td>
+            <td>
+              {% if profile and profile.department %}
+              <span class="badge badge-primary">{{ profile.department }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              <span class="badge {{ 'badge-success' if user.is_active else 'badge-danger' }}">
+                {{ 'Active' if user.is_active else 'Inactive' }}
+              </span>
+            </td>
+            <td style="font-size:0.8rem; color:var(--text-muted);">
+              {{ user.created_at.strftime('%b %d, %Y') if user.created_at else '—' }}
+            </td>
+            <td>
+              <div style="display:flex; gap:var(--space-2);">
+                <button class="btn btn-ghost btn-icon btn-sm"
+                  onclick="toggleStudent({{ user.id }}, this)"
+                  title="{{ 'Deactivate' if user.is_active else 'Activate' }}">
+                  <i data-lucide="{{ 'user-check' if user.is_active else 'user-x' }}" style="width:14px;height:14px;"></i>
+                </button>
+                <button class="btn btn-ghost btn-icon btn-sm" style="color:var(--accent-red);"
+                  onclick="deleteStudent({{ user.id }})" title="Delete">
+                  <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6"><div class="empty-state" style="padding:var(--space-12);">No students found matching your query.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if students.pages > 1 %}
+    <div style="padding:var(--space-4); border-top:1px solid var(--border); display:flex; justify-content:center; gap:var(--space-2);">
+      {% for page_num in students.iter_pages() %}
+      {% if page_num %}
+      <a href="{{ url_for('admin.students', page=page_num, q=search, dept=dept) }}"
+        class="btn {{ 'btn-primary' if page_num == students.page else 'btn-secondary' }} btn-sm">
+        {{ page_num }}
+      </a>
+      {% else %}
+      <span style="padding:4px 8px; color:var(--text-muted);">…</span>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+async function toggleStudent(userId, btn) {
+  const res = await fetch(`/admin/students/${userId}/toggle-active`, { method: 'POST' });
+  const data = await res.json();
+  if (data.success) {
+    showToast(`Student ${data.is_active ? 'activated' : 'deactivated'}`, 'success');
+    setTimeout(() => location.reload(), 600);
+  }
+}
+
+async function deleteStudent(userId) {
+  if (!confirm('Delete this student? This cannot be undone.')) return;
+  const res = await fetch(`/admin/students/${userId}/delete`, { method: 'POST' });
+  const data = await res.json();
+  if (data.success) {
+    showToast('Student deleted', 'success');
+    setTimeout(() => location.reload(), 600);
+  }
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

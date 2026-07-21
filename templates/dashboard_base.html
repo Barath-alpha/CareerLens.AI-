@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block body %}
+
+<!-- ── Top Navigation ─────────────────────────────────── -->
+<nav class="navbar" id="topNav">
+  <!-- Mobile Menu Button -->
+  <button class="btn btn-ghost btn-icon" id="sidebarToggle" aria-label="Toggle sidebar" style="margin-right:var(--space-3);">
+    <i data-lucide="menu" style="width:18px;height:18px;"></i>
+  </button>
+
+  <!-- Brand -->
+  <a href="{{ url_for('index') }}" class="nav-brand">
+    <div class="logo-icon">🎯</div>
+    <span class="brand-text">CareerLens-AI</span>
+  </a>
+
+  <!-- Center search (desktop) -->
+  <div class="nav-search" style="flex:1; max-width:380px; margin:0 var(--space-8);">
+    <div class="input-group">
+      <i data-lucide="search" class="input-icon" style="width:14px;height:14px;"></i>
+      <input type="text" class="form-control" style="height:36px; font-size:0.83rem;" placeholder="Search features, pages..." id="globalSearch">
+    </div>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:var(--space-3); margin-left:auto;">
+    <!-- Theme Toggle -->
+    <button class="btn btn-ghost btn-icon btn-sm" id="themeToggle" aria-label="Toggle theme">
+      <i data-lucide="sun" id="themeIcon" style="width:16px;height:16px;"></i>
+    </button>
+
+    <!-- Notifications -->
+    <div class="dropdown" id="notifDropdown">
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="toggleDropdown('notifDropdown')" style="position:relative;" aria-label="Notifications">
+        <i data-lucide="bell" style="width:18px;height:18px;"></i>
+        {% if unread_notifications > 0 %}
+        <span style="position:absolute; top:4px; right:4px; width:8px; height:8px; background:var(--accent-red); border-radius:50%; border:2px solid var(--bg-dark);"></span>
+        {% endif %}
+      </button>
+      <div class="dropdown-menu" style="min-width:320px; max-height:400px; overflow-y:auto;">
+        <div style="padding:var(--space-4) var(--space-5); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-weight:700; font-size:0.9rem;">Notifications</span>
+          {% if unread_notifications > 0 %}
+          <button class="btn btn-ghost btn-sm" onclick="markAllRead()" style="font-size:0.75rem; padding:2px 8px;">Mark all read</button>
+          {% endif %}
+        </div>
+        <div id="notifList">
+          <div style="padding:var(--space-4); text-align:center; color:var(--text-muted); font-size:0.8rem;">
+            <i data-lucide="loader-2" class="animate-spin" style="width:16px;height:16px;"></i>
+          </div>
+        </div>
+        <div style="padding:var(--space-3) var(--space-4); border-top:1px solid var(--border); text-align:center;">
+          <a href="{{ url_for('student.notifications') }}" class="btn btn-ghost btn-sm" style="font-size:0.8rem;">View All Notifications</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Menu -->
+    <div class="dropdown" id="userDropdown">
+      <button class="btn btn-ghost" style="display:flex; align-items:center; gap:var(--space-2); padding:4px 8px;" onclick="toggleDropdown('userDropdown')">
+        <div class="avatar avatar-sm" style="background:var(--grad-primary); color:#fff; font-size:0.7rem; font-weight:700;">
+          {{ (current_user.profile.full_name[:2] if current_user.profile and current_user.profile.full_name else current_user.email[:2]).upper() }}
+        </div>
+        <span style="font-size:0.85rem; font-weight:600; max-width:100px;" class="truncate">
+          {{ current_user.profile.full_name.split()[0] if current_user.profile and current_user.profile.full_name else current_user.email.split('@')[0] }}
+        </span>
+        <i data-lucide="chevron-down" style="width:14px;height:14px; color:var(--text-muted);"></i>
+      </button>
+      <div class="dropdown-menu">
+        <a href="{{ url_for('student.profile') }}" class="dropdown-item">
+          <i data-lucide="user" style="width:16px;height:16px;"></i> My Profile
+        </a>
+        <a href="{{ url_for('student.settings') }}" class="dropdown-item">
+          <i data-lucide="settings" style="width:16px;height:16px;"></i> Settings
+        </a>
+        <div class="dropdown-divider"></div>
+        <a href="{{ url_for('auth.logout') }}" class="dropdown-item" style="color:var(--accent-red);">
+          <i data-lucide="log-out" style="width:16px;height:16px;"></i> Sign Out
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Sidebar ────────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+  <!-- User Profile Card -->
+  <div style="padding:var(--space-4) var(--space-4) var(--space-2);">
+    <div style="background:var(--bg-glass-light); border:1px solid var(--border); border-radius:var(--radius-lg); padding:var(--space-4);">
+      <div style="display:flex; align-items:center; gap:var(--space-3);">
+        <div class="avatar avatar-md" style="background:var(--grad-primary); color:#fff; font-weight:700; font-size:0.9rem;">
+          {{ (current_user.profile.full_name[:2] if current_user.profile and current_user.profile.full_name else current_user.email[:2]).upper() }}
+        </div>
+        <div style="min-width:0;">
+          <div style="font-weight:700; font-size:0.85rem; color:var(--text-heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            {{ current_user.profile.full_name if current_user.profile and current_user.profile.full_name else current_user.email.split('@')[0] }}
+          </div>
+          <div style="font-size:0.7rem; color:var(--text-muted);">
+            {% if current_user.profile %}{{ current_user.profile.department or 'Student' }}{% else %}Student{% endif %}
+          </div>
+          <!-- Profile Completeness -->
+          <div style="display:flex; align-items:center; gap:var(--space-2); margin-top:4px;">
+            <div class="progress" style="flex:1; height:4px;">
+              <div class="progress-bar" style="width:{{ current_user.profile.profile_completeness|int if current_user.profile else 0 }}%;"></div>
+            </div>
+            <span style="font-size:0.65rem; color:var(--text-muted);">{{ current_user.profile.profile_completeness|int if current_user.profile else 0 }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <span class="sidebar-section-title">Main</span>
+
+    <a href="{{ url_for('student.dashboard') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.dashboard' }}">
+      <i data-lucide="layout-dashboard" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Dashboard</span>
+    </a>
+
+    <a href="{{ url_for('predict.predict') }}" class="sidebar-link {{ 'active' if 'predict' in request.endpoint }}">
+      <i data-lucide="brain" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>AI Prediction</span>
+    </a>
+
+    <a href="{{ url_for('student.profile') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.profile' }}">
+      <i data-lucide="user-circle" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>My Profile</span>
+    </a>
+
+    <span class="sidebar-section-title">Academics</span>
+
+    <a href="{{ url_for('student.skills') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.skills' }}">
+      <i data-lucide="zap" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Skill Assessment</span>
+    </a>
+
+    <a href="{{ url_for('student.projects') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.projects' }}">
+      <i data-lucide="code-2" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Projects</span>
+    </a>
+
+    <a href="{{ url_for('student.internships') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.internships' }}">
+      <i data-lucide="briefcase" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Internships</span>
+    </a>
+
+    <a href="{{ url_for('student.certificates') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.certificates' }}">
+      <i data-lucide="award" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Certificates</span>
+    </a>
+
+    <a href="{{ url_for('student.coding_profile') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.coding_profile' }}">
+      <i data-lucide="terminal" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Coding Profile</span>
+    </a>
+
+    <span class="sidebar-section-title">Career Tools</span>
+
+    <a href="{{ url_for('student.ai_advisor') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.ai_advisor' }}">
+      <i data-lucide="bot" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>AI Career Advisor</span>
+    </a>
+
+    <a href="{{ url_for('student.interview_prep') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.interview_prep' }}">
+      <i data-lucide="mic" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Interview Prep</span>
+    </a>
+
+    <a href="{{ url_for('predict.eligible_companies') }}" class="sidebar-link {{ 'active' if request.endpoint == 'predict.eligible_companies' }}">
+      <i data-lucide="building" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Eligible Companies</span>
+    </a>
+
+    <span class="sidebar-section-title">Progress</span>
+
+    <a href="{{ url_for('student.goals') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.goals' }}">
+      <i data-lucide="target" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Goals Tracker</span>
+    </a>
+
+    <a href="{{ url_for('student.quiz_competition') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.quiz_competition' }}">
+      <i data-lucide="help-circle" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Quiz Competition</span>
+    </a>
+
+    <a href="{{ url_for('student.leaderboard') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.leaderboard' }}">
+      <i data-lucide="trophy" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Leaderboard</span>
+    </a>
+
+    <a href="{{ url_for('predict.history') }}" class="sidebar-link {{ 'active' if request.endpoint == 'predict.history' }}">
+      <i data-lucide="history" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Prediction History</span>
+    </a>
+
+    <a href="{{ url_for('student.notifications') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.notifications' }}">
+      <i data-lucide="bell" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Notifications</span>
+      {% if unread_notifications > 0 %}
+      <span class="badge-dot"></span>
+      {% endif %}
+    </a>
+
+    {% if current_user.role == 'admin' %}
+    <span class="sidebar-section-title">Admin</span>
+    <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link">
+      <i data-lucide="shield" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Admin Panel</span>
+    </a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="{{ url_for('student.settings') }}" class="sidebar-link {{ 'active' if request.endpoint == 'student.settings' }}">
+      <i data-lucide="settings" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Settings</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color:var(--accent-red);">
+      <i data-lucide="log-out" class="sidebar-icon" style="width:18px;height:18px;"></i>
+      <span>Sign Out</span>
+    </a>
+  </div>
+</aside>
+
+<!-- Mobile overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ── Main Content ─────────────────────────────────── -->
+<main class="main-content" id="mainContent">
+  {% block dashboard_content %}{% endblock %}
+</main>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% block dashboard_js %}{% endblock %}
+
+<script>
+// Load notifications on dropdown open
+document.getElementById('notifDropdown').addEventListener('click', async () => {
+  const list = document.getElementById('notifList');
+  if (!list.dataset.loaded) {
+    const res = await fetch('/api/notifications');
+    const data = await res.json();
+    list.dataset.loaded = '1';
+    if (data.notifications.length === 0) {
+      list.innerHTML = '<div style="padding:var(--space-6); text-align:center; color:var(--text-muted); font-size:0.85rem;">No notifications yet</div>';
+      return;
+    }
+    list.innerHTML = data.notifications.slice(0,6).map(n => `
+      <a class="dropdown-item" href="${n.link || '#'}" style="align-items:flex-start; gap:var(--space-3);">
+        <span style="font-size:1rem;">${n.type === 'success' ? '✅' : n.type === 'warning' ? '⚠️' : 'ℹ️'}</span>
+        <div>
+          <div style="font-size:0.82rem; font-weight:600; color:var(--text-heading);">${n.title}</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${n.message || ''}</div>
+        </div>
+      </a>`).join('');
+  }
+});
+
+async function markAllRead() {
+  await fetch('/api/notifications/read-all', {method:'POST'});
+  document.getElementById('notifList').dataset.loaded = '';
+  showToast('All notifications marked as read', 'success');
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}

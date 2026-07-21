@@ -1,0 +1,249 @@
+{% extends "dashboard_base.html" %}
+{% block title %}AI Career Advisor{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up" style="height:calc(100vh - 130px); display:flex; flex-direction:column;">
+  <div class="page-header">
+    <h1 class="page-title">🤖 AI Career Advisor</h1>
+    <p class="page-subtitle">Your personalized AI career coach — powered by Gemini AI</p>
+  </div>
+
+  <div style="flex:1; display:grid; grid-template-columns:1fr 280px; gap:var(--space-5); min-height:0;">
+
+    <!-- Chat Area -->
+    <div class="card" style="display:flex; flex-direction:column; min-height:0;">
+      <div class="card-header flex items-center justify-between">
+        <div style="display:flex; align-items:center; gap:var(--space-3);">
+          <div style="width:36px; height:36px; background:var(--grad-primary); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🤖</div>
+          <div>
+            <div style="font-weight:700; font-size:0.9rem;">CareerLens-AI Advisor</div>
+            <div style="font-size:0.72rem; color:var(--accent-green); display:flex; align-items:center; gap:4px;">
+              <span style="width:6px; height:6px; background:var(--accent-green); border-radius:50%;"></span>
+              Online · Powered by Gemini AI
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearChat()">Clear Chat</button>
+      </div>
+
+      <!-- Messages -->
+      <div id="chatMessages" class="chat-messages" style="flex:1; overflow-y:auto;">
+        <!-- Welcome message -->
+        <div class="chat-message assistant">
+          <div class="chat-avatar" style="background:var(--grad-primary); color:#fff;">🤖</div>
+          <div class="chat-bubble">
+            👋 Hi {{ profile.full_name.split()[0] if profile and profile.full_name else 'there' }}! I'm your CareerLens-AI Career Advisor.
+
+I can help you with:
+• 📚 Interview preparation & tips
+• 📄 Resume optimization
+• 🗺️ Personalized learning roadmaps
+• 🏢 Company research & salary insights
+• 💡 Career guidance & skill development
+
+What would you like to work on today?
+          </div>
+        </div>
+
+        {% for msg in history %}
+        <div class="chat-message {{ msg.role }}">
+          {% if msg.role == 'user' %}
+          <div class="chat-avatar" style="background:var(--bg-elevated); color:var(--text-secondary);">{{ (profile.full_name[:1] if profile and profile.full_name else 'U').upper() }}</div>
+          {% else %}
+          <div class="chat-avatar" style="background:var(--grad-primary); color:#fff;">🤖</div>
+          {% endif %}
+          <div class="chat-bubble">{{ msg.message }}</div>
+        </div>
+        {% endfor %}
+
+        <!-- Typing indicator (hidden by default) -->
+        <div id="typingIndicator" class="chat-message assistant" style="display:none;">
+          <div class="chat-avatar" style="background:var(--grad-primary); color:#fff;">🤖</div>
+          <div class="chat-bubble">
+            <span style="display:flex; gap:4px; align-items:center;">
+              <span class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--text-muted);animation:bounce 1s infinite;"></span>
+              <span class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--text-muted);animation:bounce 1s infinite 0.2s;"></span>
+              <span class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--text-muted);animation:bounce 1s infinite 0.4s;"></span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="chat-input-area">
+        <textarea id="chatInput" placeholder="Ask me about interviews, resume tips, learning paths..." rows="1"
+          onkeydown="handleChatKey(event)"></textarea>
+        <button class="btn btn-primary" onclick="sendMessage()" id="sendBtn" style="flex-shrink:0;">
+          <i data-lucide="send" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Quick Prompts & Recommendations -->
+    <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+      <!-- Quick Prompts -->
+      <div class="card">
+        <div class="card-header">
+          <h3 style="font-size:0.9rem; font-weight:700;">💡 Quick Prompts</h3>
+        </div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:var(--space-2);">
+          {% for prompt in [
+            'Give me a 3-month placement preparation roadmap',
+            'How should I prepare for technical interviews?',
+            'Optimize my resume for ATS systems',
+            'What companies can I target with my profile?',
+            'How to improve my LeetCode DSA skills?',
+            'Give me common HR interview questions',
+            'What certifications should I get?',
+            'How to negotiate salary in campus placements?',
+          ] %}
+          <button class="btn btn-ghost btn-sm" style="justify-content:flex-start; font-size:0.78rem; text-align:left; padding:0.5rem 0.75rem;"
+            onclick="setPrompt('{{ prompt }}')">
+            → {{ prompt[:42] }}{% if prompt|length > 42 %}...{% endif %}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- AI Learning Path Button -->
+      <button class="btn btn-primary btn-sm" onclick="getLearningPath()">
+        📚 Generate Learning Path
+      </button>
+
+      <button class="btn btn-secondary btn-sm" onclick="getRecommendations()">
+        🎯 Get Course Recommendations
+      </button>
+
+      <!-- Recommendations Display -->
+      <div id="recommendationsPanel" style="display:none;" class="card">
+        <div class="card-header">
+          <h3 style="font-size:0.85rem; font-weight:700;">📚 Recommendations</h3>
+        </div>
+        <div class="card-body" id="recommendationsContent" style="font-size:0.8rem;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+  // Auto-resize textarea
+  const ta = document.getElementById('chatInput');
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+}
+
+function setPrompt(text) {
+  document.getElementById('chatInput').value = text;
+  document.getElementById('chatInput').focus();
+}
+
+function scrollToBottom() {
+  const msgs = document.getElementById('chatMessages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addMessage(role, content) {
+  const msgs = document.getElementById('chatMessages');
+  const msg = document.createElement('div');
+  msg.className = `chat-message ${role}`;
+  msg.innerHTML = `
+    <div class="chat-avatar" style="${role === 'assistant' ? 'background:var(--grad-primary); color:#fff;' : 'background:var(--bg-elevated); color:var(--text-secondary);'}">
+      ${role === 'assistant' ? '🤖' : '{{ (profile.full_name[:1] if profile and profile.full_name else "U").upper() }}'}
+    </div>
+    <div class="chat-bubble">${content.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/•/g, '•')}</div>
+  `;
+  msgs.insertBefore(msg, document.getElementById('typingIndicator'));
+  scrollToBottom();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  if (!message) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+  addMessage('user', message);
+
+  // Show typing
+  document.getElementById('typingIndicator').style.display = 'flex';
+  scrollToBottom();
+
+  try {
+    const res = await fetch('/ai/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message}),
+    });
+    const data = await res.json();
+
+    document.getElementById('typingIndicator').style.display = 'none';
+
+    if (data.success) {
+      addMessage('assistant', data.response);
+    } else {
+      addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+    }
+  } catch (err) {
+    document.getElementById('typingIndicator').style.display = 'none';
+    addMessage('assistant', 'Network error. Please check your connection.');
+  } finally {
+    document.getElementById('sendBtn').disabled = false;
+  }
+}
+
+function clearChat() {
+  const msgs = document.getElementById('chatMessages');
+  // Keep only the welcome message and typing indicator
+  while (msgs.children.length > 2) {
+    msgs.removeChild(msgs.children[1]);
+  }
+}
+
+async function getLearningPath() {
+  showToast('Generating your personalized learning path...', 'info', 3000);
+  const res = await fetch('/ai/learning-path');
+  const data = await res.json();
+  if (data.success) {
+    addMessage('assistant', '📚 Here\'s your personalized learning path:\n\n' + data.learning_path);
+    scrollToBottom();
+  }
+}
+
+async function getRecommendations() {
+  const panel = document.getElementById('recommendationsPanel');
+  const content = document.getElementById('recommendationsContent');
+
+  showToast('Loading recommendations...', 'info', 2000);
+  const res = await fetch('/ai/recommendations');
+  const data = await res.json();
+
+  if (data.success) {
+    content.innerHTML = data.recommendations.map(rec => `
+      <div style="margin-bottom:var(--space-4);">
+        <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary-light); margin-bottom:var(--space-2);">${rec.category}</div>
+        ${rec.resources.map(r => `
+          <a href="${r.url}" target="_blank" style="display:flex; align-items:center; gap:var(--space-2); padding:6px 8px; border-radius:8px; border:1px solid var(--border); margin-bottom:4px; text-decoration:none; color:var(--text-secondary); font-size:0.75rem; transition:all 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+            <span>${r.type === 'course' ? '🎓' : r.type === 'practice' ? '💻' : '📖'}</span>
+            <div><div style="font-weight:600; color:var(--text-heading);">${r.title}</div><div style="color:var(--text-muted);">${r.platform}</div></div>
+          </a>
+        `).join('')}
+      </div>
+    `).join('');
+    panel.style.display = 'block';
+  }
+}
+
+// Scroll to bottom on load
+scrollToBottom();
+lucide.createIcons();
+</script>
+{% endblock %}

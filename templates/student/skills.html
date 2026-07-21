@@ -1,0 +1,191 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Skills Assessment{% endblock %}
+
+{% block dashboard_content %}
+<div class="animate-fade-in-up">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1 class="page-title">⚡ Skill Assessment</h1>
+      <p class="page-subtitle">Rate your skills to improve prediction accuracy. Be honest for best results!</p>
+    </div>
+    <button class="btn btn-primary" onclick="saveSkills()">
+      <i data-lucide="save" style="width:16px;height:16px;"></i> Save Skills
+    </button>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-6);">
+
+    <!-- Technical Skills -->
+    <div class="card">
+      <div class="card-header">
+        <h3 style="font-size:1rem; font-weight:700;">💻 Technical Skills</h3>
+      </div>
+      <div class="card-body" id="skillsForm">
+        {% for field, label, icon in [
+          ('technical_score', 'Technical Knowledge', '🔧'),
+          ('programming_score', 'Programming Ability', '💻'),
+          ('problem_solving', 'Problem Solving', '🧩'),
+          ('logical_reasoning', 'Logical Reasoning', '🧠'),
+          ('aptitude_score', 'Aptitude & Mathematics', '📐'),
+          ('leetcode_solved', 'LeetCode Problems (0-500)', '🔢'),
+          ('github_activity', 'GitHub Activity (0-10)', '🐙'),
+          ('coding_contest_rating', 'Contest Rating (0-3000)', '🏆'),
+          ('hackathons_participated', 'Hackathons Joined (0-20)', '⚡'),
+        ] %}
+        <div class="form-group" style="margin-bottom:var(--space-5);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2);">
+            <label style="font-size:0.85rem; font-weight:600; color:var(--text-secondary);">{{ icon }} {{ label }}</label>
+            <span id="{{ field }}_display" style="font-size:0.9rem; font-weight:800; color:var(--primary-light);">
+              {% if field == 'leetcode_solved' %}{{ skills.leetcode_solved if skills else 0 }}
+              {% elif field == 'github_activity' %}{{ skills.github_activity if skills else 0 }}
+              {% elif field == 'coding_contest_rating' %}{{ skills.coding_contest_rating if skills else 0 }}
+              {% elif field == 'hackathons_participated' %}{{ skills.hackathons_participated if skills else 0 }}
+              {% else %}{{ (skills[field] if skills else 5)|round(1) }}/10{% endif %}
+            </span>
+          </div>
+          {% if field in ['leetcode_solved', 'coding_contest_rating', 'hackathons_participated'] %}
+          <input type="number" id="{{ field }}" class="form-control"
+            min="0" {% if field == 'leetcode_solved' %}max="500"{% elif field == 'coding_contest_rating' %}max="3000"{% else %}max="20"{% endif %}
+            value="{{ skills[field] if skills and skills[field] else 0 }}"
+            oninput="document.getElementById('{{ field }}_display').textContent = this.value">
+          {% elif field == 'github_activity' %}
+          <input type="number" id="{{ field }}" class="form-control"
+            min="0" max="10" step="0.1"
+            value="{{ skills.github_activity if skills else 0 }}"
+            oninput="document.getElementById('{{ field }}_display').textContent = parseFloat(this.value).toFixed(1)">
+          {% else %}
+          <input type="range" id="{{ field }}" min="1" max="10" step="0.5"
+            value="{{ skills[field] if skills and skills[field] else 5 }}"
+            oninput="document.getElementById('{{ field }}_display').textContent = parseFloat(this.value).toFixed(1) + '/10'">
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Soft Skills -->
+    <div>
+      <div class="card" style="margin-bottom:var(--space-5);">
+        <div class="card-header">
+          <h3 style="font-size:1rem; font-weight:700;">🗣️ Soft Skills</h3>
+        </div>
+        <div class="card-body">
+          {% for field, label, icon in [
+            ('communication_score', 'Communication', '🗣️'),
+            ('leadership_score', 'Leadership', '👑'),
+            ('soft_skills', 'Teamwork & Adaptability', '🤝'),
+            ('interview_score', 'Interview Readiness', '🎤'),
+          ] %}
+          <div class="form-group" style="margin-bottom:var(--space-5);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2);">
+              <label style="font-size:0.85rem; font-weight:600; color:var(--text-secondary);">{{ icon }} {{ label }}</label>
+              <span id="{{ field }}_display" style="font-size:0.9rem; font-weight:800; color:var(--primary-light);">
+                {{ (skills[field] if skills and skills[field] else 5)|round(1) }}/10
+              </span>
+            </div>
+            <input type="range" id="{{ field }}" min="1" max="10" step="0.5"
+              value="{{ skills[field] if skills and skills[field] else 5 }}"
+              oninput="document.getElementById('{{ field }}_display').textContent = parseFloat(this.value).toFixed(1) + '/10'">
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Skill Chart -->
+      <div class="card">
+        <div class="card-header"><h3 style="font-size:1rem; font-weight:700;">📊 Skills Radar</h3></div>
+        <div class="card-body">
+          <canvas id="skillsRadar" height="240"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+const radarCtx = document.getElementById('skillsRadar')?.getContext('2d');
+let radarChart = null;
+
+function getSkillValues() {
+  return {
+    technical: parseFloat(document.getElementById('technical_score')?.value || 5),
+    programming: parseFloat(document.getElementById('programming_score')?.value || 5),
+    problem_solving: parseFloat(document.getElementById('problem_solving')?.value || 5),
+    logical: parseFloat(document.getElementById('logical_reasoning')?.value || 5),
+    aptitude: parseFloat(document.getElementById('aptitude_score')?.value || 5),
+    communication: parseFloat(document.getElementById('communication_score')?.value || 5),
+    leadership: parseFloat(document.getElementById('leadership_score')?.value || 5),
+    interview: parseFloat(document.getElementById('interview_score')?.value || 5),
+  };
+}
+
+function initRadar() {
+  if (!radarCtx) return;
+  const vals = getSkillValues();
+  radarChart = new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+      labels: ['Technical', 'Programming', 'Problem\nSolving', 'Logical', 'Aptitude', 'Communication', 'Leadership', 'Interview'],
+      datasets: [{
+        label: 'Your Skills',
+        data: Object.values(vals),
+        backgroundColor: 'rgba(99,102,241,0.15)',
+        borderColor: '#6366f1',
+        pointBackgroundColor: '#6366f1',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      scales: { r: { min: 0, max: 10, ticks: { stepSize: 2, font: { size: 9 }, color: 'var(--text-muted)' }, grid: { color: 'rgba(255,255,255,0.05)' }, angleLines: { color: 'rgba(255,255,255,0.05)' }, pointLabels: { color: 'var(--text-secondary)', font: { size: 10 } } } },
+      plugins: { legend: { display: false } },
+      animation: { duration: 800 }
+    }
+  });
+}
+
+initRadar();
+
+// Live update chart on slider change
+document.querySelectorAll('input[type="range"], input[type="number"]').forEach(input => {
+  input.addEventListener('input', () => {
+    if (radarChart) {
+      const vals = getSkillValues();
+      radarChart.data.datasets[0].data = Object.values(vals);
+      radarChart.update('none');
+    }
+  });
+});
+
+async function saveSkills() {
+  const data = {
+    technical_score: parseFloat(document.getElementById('technical_score')?.value || 0),
+    programming_score: parseFloat(document.getElementById('programming_score')?.value || 0),
+    problem_solving: parseFloat(document.getElementById('problem_solving')?.value || 0),
+    logical_reasoning: parseFloat(document.getElementById('logical_reasoning')?.value || 0),
+    aptitude_score: parseFloat(document.getElementById('aptitude_score')?.value || 0),
+    communication_score: parseFloat(document.getElementById('communication_score')?.value || 0),
+    leadership_score: parseFloat(document.getElementById('leadership_score')?.value || 0),
+    soft_skills: parseFloat(document.getElementById('soft_skills')?.value || 0),
+    interview_score: parseFloat(document.getElementById('interview_score')?.value || 0),
+    leetcode_solved: parseInt(document.getElementById('leetcode_solved')?.value || 0),
+    github_activity: parseFloat(document.getElementById('github_activity')?.value || 0),
+    coding_contest_rating: parseInt(document.getElementById('coding_contest_rating')?.value || 0),
+    hackathons_participated: parseInt(document.getElementById('hackathons_participated')?.value || 0),
+  };
+
+  const res = await fetch('{{ url_for("student.skills") }}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data),
+  });
+  const result = await res.json();
+  if (result.success) {
+    showToast('Skills saved successfully! Run prediction to see updated results.', 'success');
+  }
+}
+
+lucide.createIcons();
+</script>
+{% endblock %}
