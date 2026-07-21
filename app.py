@@ -299,9 +299,12 @@ def _seed_initial_data():
 # Top-level Flask WSGI instance for deployment servers (Gunicorn / Render / Vercel / Flask CLI)
 app = create_app(os.getenv('FLASK_CONFIG', 'development'))
 
-with app.app_context():
-    db.create_all()
-    _seed_initial_data()
+try:
+    with app.app_context():
+        db.create_all()
+        _seed_initial_data()
+except Exception as e:
+    print(f"[Startup Context] Notice: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, use_reloader=False)

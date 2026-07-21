@@ -4,10 +4,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'placementai-super-secret-key-2024')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///placementai.db')
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'careerlens-ai-super-secret-key-2026')
+
+    # Handle database path for Vercel Read-Only Filesystem (/tmp)
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url:
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
+        SQLALCHEMY_DATABASE_URI = db_url
+    else:
+        if 'VERCEL' in os.environ:
+            SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/placementai.db'
+        else:
+            SQLALCHEMY_DATABASE_URI = 'sqlite:///placementai.db'
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key-2024')
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key-2026')
     JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hour
     JWT_REFRESH_TOKEN_EXPIRES = 604800  # 7 days
 
@@ -17,13 +29,17 @@ class Config:
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'True') == 'True'
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME', '')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', '')
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_USERNAME', 'noreply@placementai.com')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_USERNAME', 'noreply@careerlens-ai.com')
 
     # Gemini AI
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
     # File Upload
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+    if 'VERCEL' in os.environ:
+        UPLOAD_FOLDER = '/tmp/uploads'
+    else:
+        UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
     ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
