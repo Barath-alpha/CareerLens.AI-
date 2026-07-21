@@ -296,9 +296,12 @@ def _seed_initial_data():
         print("[Seed] 25 Leaderboard students with Daily & Weekly Quiz marks seeded.")
 
 
+# Top-level Flask WSGI instance for deployment servers (Gunicorn / Render / Vercel / Flask CLI)
+app = create_app(os.getenv('FLASK_CONFIG', 'development'))
+
+with app.app_context():
+    db.create_all()
+    _seed_initial_data()
+
 if __name__ == '__main__':
-    app = create_app('development')
-    with app.app_context():
-        db.create_all()
-        _seed_initial_data()
     app.run(debug=True, port=5000, use_reloader=False)
