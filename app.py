@@ -44,6 +44,36 @@ def create_app(config_name='default'):
     app.register_blueprint(ai_bp, url_prefix='/ai')
     app.register_blueprint(api_bp, url_prefix='/api')
 
+    @app.before_request
+    def auto_authenticate_guest():
+        from flask_login import login_user
+        if not current_user.is_authenticated:
+            path = request.path
+            if (path.startswith('/student') or path.startswith('/predict') or 
+                path.startswith('/ai') or path == '/dashboard' or path == '/submit-quiz'):
+                student = User.query.filter_by(email='student@demo.com').first()
+                if not student:
+                    student = User(email='student@demo.com', role='student', is_verified=True)
+                    student.set_password('Student@123')
+                    db.session.add(student)
+                    db.session.commit()
+
+                    profile = StudentProfile(
+                        user_id=student.id,
+                        full_name='Priya Sharma',
+                        phone='+91-9876543210',
+                        college='IIT Bombay',
+                        department='Computer Science',
+                        year=3,
+                        bio='Passionate developer & ML enthusiast.',
+                        profile_completeness=85.0,
+                        daily_streak=12
+                    )
+                    db.session.add(profile)
+                    db.session.commit()
+
+                login_user(student, remember=True)
+
     # Main routes
     @app.route('/')
     def index():

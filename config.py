@@ -19,6 +19,9 @@ class Config:
             SQLALCHEMY_DATABASE_URI = 'sqlite:///placementai.db'
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    REMEMBER_COOKIE_DURATION = 31536000  # 1 Year in seconds
+    REMEMBER_COOKIE_HTTPONLY = True
+    SESSION_PERMANENT = True
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key-2026')
     JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hour
     JWT_REFRESH_TOKEN_EXPIRES = 604800  # 7 days

@@ -143,7 +143,7 @@ def login():
             flash(error_msg, 'danger')
             return render_template('auth/login.html')
 
-        login_user(user, remember=bool(remember))
+        login_user(user, remember=True)
         user.last_login = datetime.utcnow()
         db.session.commit()
         log_activity(user.id, 'login', f'User logged in from {request.remote_addr}')
