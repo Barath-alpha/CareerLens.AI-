@@ -38,7 +38,7 @@ function dismissToast(toast) {
 // ── Theme Toggle ─────────────────────────────────────────
 const THEME_KEY = 'placementai-theme';
 
-function getTheme() { return localStorage.getItem(THEME_KEY) || 'dark'; }
+function getTheme() { return localStorage.getItem(THEME_KEY) || 'light'; }
 
 function setTheme(theme) {
   localStorage.setItem(THEME_KEY, theme);
